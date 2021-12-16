@@ -1,7 +1,7 @@
 
 `include "defines.v"
 
-module regfile(
+module ysyx_210247_regfile(
     input  wire clk,
 	input  wire rst,
 	
