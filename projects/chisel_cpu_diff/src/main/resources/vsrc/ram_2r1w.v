@@ -49,10 +49,13 @@ module ram_2r1w (
 
   assign imem_data = {32'b0000_0000_0000_0000, (imem_addr[2] ? imem_data_0[63:32] : imem_data_0[31:0])};
 
-  assign dmem_rdata = ram_read_helper(dmem_en, {3'b000, (dmem_addr-64'h0000_0000_8000_0000) >> 3});
+  assign dmem_rdata = ram_read_helper(dmem_en, dmem_addr);
+
+  wire [63:0] mem_addr = {3'b000, (dmem_addr-64'h0000_0000_8000_0000) >> 3};
 
   always @(posedge clk) begin
-    ram_write_helper((dmem_addr - 64'h0000_0000_8000_0000) >> 3, dmem_wdata, dmem_wmask, dmem_en & dmem_wen);
+    if(dmem_en & dmem_wen)
+      ram_write_helper(dmem_addr, dmem_wdata, dmem_wmask, dmem_en & dmem_wen);
   end
 
 endmodule
