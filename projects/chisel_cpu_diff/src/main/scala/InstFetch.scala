@@ -94,7 +94,7 @@ class InstFetch extends Module {
   val bp = Module(new Brpu)
   val predict_pc = RegInit(0.U(32.W))
 
-  val if_pc = RegInit("h7fff_fffc".U(32.W))
+  val if_pc = RegInit("h8000_0000".U(32.W))
   val if_inst = RegInit(0.U(32.W))
   val next_pc = Mux(csr_jmp, csr_newpc, bp.io.pred_pc)
   //val next_pc = Mux(csr_jmp, csr_newpc, Mux(branch_valid, io.br_target, Mux(wait_valid || abandon, wait_pc, if_pc + 4.U)))

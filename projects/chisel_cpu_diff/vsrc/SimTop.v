@@ -38359,7 +38359,7 @@ module InstFetch(
       predict_pc <= bp_io_pred_pc;
     end
     if (reset) begin // @[InstFetch.scala 97:22]
-      if_pc <= 32'h7ffffffc; // @[InstFetch.scala 97:22]
+      if_pc <= 32'h80000000; // @[InstFetch.scala 97:22]
     end else if (if_allow_in & preif_ready_go) begin // @[InstFetch.scala 113:41]
       if (io_flush) begin // @[InstFetch.scala 114:19]
         if_pc <= 32'h0;
