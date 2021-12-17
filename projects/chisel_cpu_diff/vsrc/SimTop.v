@@ -38264,6 +38264,7 @@ module InstFetch(
   reg [31:0] _RAND_5;
   reg [31:0] _RAND_6;
   reg [31:0] _RAND_7;
+  reg [31:0] _RAND_8;
 `endif // RANDOMIZE_REG_INIT
   wire  bp_clock; // @[InstFetch.scala 94:18]
   wire  bp_reset; // @[InstFetch.scala 94:18]
@@ -38295,8 +38296,10 @@ module InstFetch(
   wire  _GEN_6 = io_imem_inst_ready ? 1'h0 : wait_valid; // @[InstFetch.scala 83:33 InstFetch.scala 84:16 InstFetch.scala 40:30]
   wire  _GEN_7 = branch_valid | _GEN_6; // @[InstFetch.scala 79:23 InstFetch.scala 80:16]
   reg [31:0] predict_pc; // @[InstFetch.scala 95:27]
-  reg [31:0] if_pc; // @[InstFetch.scala 97:22]
-  reg [31:0] if_inst; // @[InstFetch.scala 98:24]
+  reg  reset_valid; // @[InstFetch.scala 97:28]
+  reg [31:0] if_pc; // @[InstFetch.scala 100:22]
+  reg [31:0] if_inst; // @[InstFetch.scala 101:24]
+  wire [31:0] _next_pc_T = reset_valid ? if_pc : bp_io_pred_pc; // @[InstFetch.scala 102:44]
   Brpu bp ( // @[InstFetch.scala 94:18]
     .clock(bp_clock),
     .reset(bp_reset),
@@ -38310,21 +38313,21 @@ module InstFetch(
     .io_pred_pc(bp_io_pred_pc)
   );
   assign io_imem_inst_valid = ~if_valid_in | io_if_valid_out & io_if_allow_out; // @[InstFetch.scala 59:32]
-  assign io_imem_inst_addr = csr_jmp ? csr_newpc : bp_io_pred_pc; // @[InstFetch.scala 99:20]
-  assign io_fe_pc = io_flush ? 32'h0 : if_pc; // @[InstFetch.scala 123:21]
-  assign io_fe_inst = io_flush ? 32'h0 : if_inst; // @[InstFetch.scala 124:21]
-  assign io_instr_valid = io_flush ? 1'h0 : 1'h1; // @[InstFetch.scala 130:24]
-  assign io_predict_taken = bp_io_pred_br; // @[InstFetch.scala 110:20]
-  assign io_predict_target = bp_io_pred_pc; // @[InstFetch.scala 111:21]
+  assign io_imem_inst_addr = csr_jmp ? csr_newpc : _next_pc_T; // @[InstFetch.scala 102:20]
+  assign io_fe_pc = io_flush ? 32'h0 : if_pc; // @[InstFetch.scala 126:21]
+  assign io_fe_inst = io_flush ? 32'h0 : if_inst; // @[InstFetch.scala 127:21]
+  assign io_instr_valid = io_flush ? 1'h0 : 1'h1; // @[InstFetch.scala 133:24]
+  assign io_predict_taken = bp_io_pred_br; // @[InstFetch.scala 113:20]
+  assign io_predict_target = bp_io_pred_pc; // @[InstFetch.scala 114:21]
   assign io_if_valid_out = if_valid_in & _preif_ready_go_T_1; // @[InstFetch.scala 57:31]
   assign bp_clock = clock;
   assign bp_reset = reset;
-  assign bp_io_pc = predict_pc; // @[InstFetch.scala 103:15]
-  assign bp_io_jmp_packet_valid = io_jmp_packet_valid; // @[InstFetch.scala 109:20]
-  assign bp_io_jmp_packet_inst_pc = io_jmp_packet_inst_pc; // @[InstFetch.scala 109:20]
-  assign bp_io_jmp_packet_taken = io_jmp_packet_taken; // @[InstFetch.scala 109:20]
-  assign bp_io_jmp_packet_target = io_jmp_packet_target; // @[InstFetch.scala 109:20]
-  assign bp_io_jmp_packet_mispredict = io_jmp_packet_mispredict; // @[InstFetch.scala 109:20]
+  assign bp_io_pc = predict_pc; // @[InstFetch.scala 106:15]
+  assign bp_io_jmp_packet_valid = io_jmp_packet_valid; // @[InstFetch.scala 112:20]
+  assign bp_io_jmp_packet_inst_pc = io_jmp_packet_inst_pc; // @[InstFetch.scala 112:20]
+  assign bp_io_jmp_packet_taken = io_jmp_packet_taken; // @[InstFetch.scala 112:20]
+  assign bp_io_jmp_packet_target = io_jmp_packet_target; // @[InstFetch.scala 112:20]
+  assign bp_io_jmp_packet_mispredict = io_jmp_packet_mispredict; // @[InstFetch.scala 112:20]
   always @(posedge clock) begin
     if_valid_in <= reset | _GEN_0; // @[InstFetch.scala 34:28 InstFetch.scala 34:28]
     if (reset) begin // @[InstFetch.scala 40:30]
@@ -38349,30 +38352,33 @@ module InstFetch(
     end
     if (reset) begin // @[InstFetch.scala 95:27]
       predict_pc <= 32'h0; // @[InstFetch.scala 95:27]
-    end else if (csr_jmp) begin // @[InstFetch.scala 99:20]
+    end else if (csr_jmp) begin // @[InstFetch.scala 102:20]
       if (io_csr_jmp) begin // @[InstFetch.scala 48:22]
         predict_pc <= io_newpc;
       end else begin
         predict_pc <= csr_jmp_wait_pc;
       end
+    end else if (reset_valid) begin // @[InstFetch.scala 102:44]
+      predict_pc <= if_pc;
     end else begin
       predict_pc <= bp_io_pred_pc;
     end
-    if (reset) begin // @[InstFetch.scala 97:22]
-      if_pc <= 32'h80000000; // @[InstFetch.scala 97:22]
-    end else if (if_allow_in & preif_ready_go) begin // @[InstFetch.scala 113:41]
-      if (io_flush) begin // @[InstFetch.scala 114:19]
+    reset_valid <= reset; // @[InstFetch.scala 97:28 InstFetch.scala 97:28 InstFetch.scala 98:15]
+    if (reset) begin // @[InstFetch.scala 100:22]
+      if_pc <= 32'h80000000; // @[InstFetch.scala 100:22]
+    end else if (if_allow_in & preif_ready_go) begin // @[InstFetch.scala 116:41]
+      if (io_flush) begin // @[InstFetch.scala 117:19]
         if_pc <= 32'h0;
-      end else if (csr_jmp) begin // @[InstFetch.scala 99:20]
+      end else if (csr_jmp) begin // @[InstFetch.scala 102:20]
         if_pc <= csr_newpc;
       end else begin
-        if_pc <= bp_io_pred_pc;
+        if_pc <= _next_pc_T;
       end
     end
-    if (reset) begin // @[InstFetch.scala 98:24]
-      if_inst <= 32'h0; // @[InstFetch.scala 98:24]
-    end else if (if_allow_in & preif_ready_go) begin // @[InstFetch.scala 113:41]
-      if (io_flush) begin // @[InstFetch.scala 115:19]
+    if (reset) begin // @[InstFetch.scala 101:24]
+      if_inst <= 32'h0; // @[InstFetch.scala 101:24]
+    end else if (if_allow_in & preif_ready_go) begin // @[InstFetch.scala 116:41]
+      if (io_flush) begin // @[InstFetch.scala 118:19]
         if_inst <= 32'h0;
       end else begin
         if_inst <= io_imem_inst_read;
@@ -38428,9 +38434,11 @@ initial begin
   _RAND_5 = {1{`RANDOM}};
   predict_pc = _RAND_5[31:0];
   _RAND_6 = {1{`RANDOM}};
-  if_pc = _RAND_6[31:0];
+  reset_valid = _RAND_6[0:0];
   _RAND_7 = {1{`RANDOM}};
-  if_inst = _RAND_7[31:0];
+  if_pc = _RAND_7[31:0];
+  _RAND_8 = {1{`RANDOM}};
+  if_inst = _RAND_8[31:0];
 `endif // RANDOMIZE_REG_INIT
   `endif // RANDOMIZE
 end // initial
