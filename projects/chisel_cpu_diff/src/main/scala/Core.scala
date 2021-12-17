@@ -33,6 +33,7 @@ class Core extends Module {
   fetch.io.newpc            := csr.io.newpc
   fetch.io.flush            := writeback.io.flush
   fetch.io.if_allow_out     := decode.io.if_allow_out
+  fetch.io.jmp_packet       <> decode.io.jmp_packet
 
   decode.io.rs1_data        := rf.io.rs1_data
   decode.io.rs2_data        := rf.io.rs2_data
@@ -46,6 +47,8 @@ class Core extends Module {
   decode.io.WB_wdest        := writeback.io.WB_wdest
   decode.io.WB_result       := writeback.io.WB_result
   decode.io.flush           := writeback.io.flush
+  decode.io.predict_taken   := fetch.io.predict_taken
+  decode.io.predict_target  := fetch.io.predict_target
   decode.io.time_int        := clint.io.time_int
 
   execution.io.dmem         <> io.dmem

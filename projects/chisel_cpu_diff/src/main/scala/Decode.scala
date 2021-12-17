@@ -37,7 +37,11 @@ class Decode extends Module {
     val br_target = Output(UInt(32.W))
     val br_stall = Output(Bool())
 
+    val jmp_packet = Output(new JumpIO)
+
     val flush = Input(Bool())
+    val predict_taken = Input(Bool())
+    val predict_target = Input(UInt(32.W))
 
     val if_allow_out = Output(Bool())
     val id_valid_out = Output(Bool())
@@ -65,11 +69,15 @@ class Decode extends Module {
   val id_op1   = Wire(UInt(64.W))
   val id_op2   = Wire(UInt(64.W))
   val instr_valid = RegInit(false.B)
+  val predict_taken = RegInit(false.B)
+  val predict_target = RegInit(0.U(32.W))
 
   when(id_allow_in && io.if_valid_out) {
     id_pc   := Mux(io.flush, 0.U, io.fe.pc)
     id_inst := Mux(io.flush, 0.U, io.fe.inst)
     instr_valid := io.instr_valid
+    predict_taken := io.predict_taken
+    predict_target := io.predict_target
   }
 
   val id_opcode   = WireInit((0.U(TYPE_X.length.W)))
@@ -645,5 +653,14 @@ class Decode extends Module {
   io.idop.storeop := Mux(io.flush, 0.U, id_storeop)
   io.idop.sysop   := Mux(io.flush, 0.U, id_sysop)
   io.skip         := Mux(io.flush, 0.U, id_skip)
+
+  val mis_predict = Mux(io.br_taken, (predict_taken && (io.br_target =/= predict_target)) || !predict_taken, predict_taken)
+
+  io.jmp_packet.valid := (inst === JAL)  || (inst === JALR) || (inst === BEQ)  || (inst === BNE)   || (inst === BGE) || 
+                         (inst === BGEU) || (inst === BLT)  || (inst === BLTU) || (inst === ECALL) || (inst === MRET)
+  io.jmp_packet.inst_pc := id_pc
+  io.jmp_packet.taken  := io.br_taken
+  io.jmp_packet.target := io.br_target
+  io.jmp_packet.mispredict := io.jmp_packet.valid && mis_predict
 
 }

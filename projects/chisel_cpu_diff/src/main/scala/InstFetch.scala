@@ -7,9 +7,6 @@ class InstFetch extends Module {
     val imem = new CoreInst
     val fe   = new BUS_R
 
-    val addr_valid = Output(Bool())
-    val wait_valid = Output(Bool())
-
     val br_valid = Input(Bool())
     val br_taken = Input(Bool())
     val br_target = Input(UInt(32.W))
@@ -19,7 +16,11 @@ class InstFetch extends Module {
 
     val instr_valid = Output(Bool())
 
+    val jmp_packet = Input(new JumpIO)
+
     val flush = Input(Bool())
+    val predict_taken = Output(Bool())
+    val predict_target = Output(UInt(32.W))
 
     val if_valid_out = Output(Bool())
     val if_allow_out = Input(Bool())
@@ -90,11 +91,20 @@ class InstFetch extends Module {
     abandon := false.B
   }
 
-  io.wait_valid := wait_valid
-
   val if_pc = RegInit("h7fff_fffc".U(32.W))
   val if_inst = RegInit(0.U(32.W))
   val next_pc = Mux(csr_jmp, csr_newpc, Mux(branch_valid, io.br_target, Mux(wait_valid || abandon, wait_pc, if_pc + 4.U)))
+
+  val bp = Module(new Brpu)
+  bp.io.pc := next_pc
+  bp.io.inst := if_inst
+  bp.io.branch := (if_inst === Instructions.JAL) || (if_inst === Instructions.JALR) ||
+                  (if_inst === Instructions.BEQ) || (if_inst === Instructions.BNE)  ||
+                  (if_inst === Instructions.BLT) || (if_inst === Instructions.BLTU) ||
+                  (if_inst === Instructions.BGE) || (if_inst === Instructions.BGEU);
+  bp.io.jmp_packet <> io.jmp_packet
+  io.predict_taken := bp.io.pred_br
+  io.predict_target := bp.io.pred_pc
 
   when (if_allow_in && preif_valid_out) {
     if_pc   := Mux(io.flush, 0.U, next_pc)
@@ -114,14 +124,5 @@ class InstFetch extends Module {
   io.fe.op1   := 0.U
   io.fe.op2   := 0.U
   io.instr_valid := Mux(io.flush, false.B, true.B)
-
-  val addr_valid = RegInit(true.B)
-  when (if_valid) {
-    addr_valid := true.B
-  }
-  .otherwise {
-    addr_valid := false.B
-  }
-  io.addr_valid := addr_valid
 
 }
