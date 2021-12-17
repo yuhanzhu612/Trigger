@@ -148,13 +148,6 @@ class Csr extends Module {
 
   // difftest for CSR state
 
-  // val dt_ae = Module(new DifftestArchEvent)
-  // dt_ae.io.clock        := clock
-  // dt_ae.io.coreid       := 0.U
-  // dt_ae.io.intrNO       := Mux(intr, intr_no, 0.U)
-  // dt_ae.io.cause        := 0.U
-  // dt_ae.io.exceptionPC  := Mux(intr, mepc, 0.U)
-
   val dt_cs = Module(new DifftestCSRState)
   dt_cs.io.clock          := clock
   dt_cs.io.coreid         := 0.U
