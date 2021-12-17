@@ -2,16 +2,6 @@ import chisel3._
 import chisel3.util._
 
 trait Constant {
-  val Y = "1"
-  val N = "0"
-  val X = "?"
-
-  val FU_X      = "???"
-  val FU_ALU    = "001"
-  val FU_JMP    = "010"
-  val FU_SYS    = "011"
-  val FU_MEM    = "100"
-
   val ALU_X     = "??_????_????"
   val ALU_ADD   = "00_0000_0001"
   val ALU_SUB   = "00_0000_0010"
@@ -23,21 +13,6 @@ trait Constant {
   val ALU_SLL   = "00_1000_0000"
   val ALU_SRL   = "01_0000_0000"
   val ALU_SRA   = "10_0000_0000"
-
-  val JMP_X     = "????"
-  val JMP_JAL   = "0001"
-  val JMP_JALR  = "0010"
-  val JMP_BEQ   = "0011"
-  val JMP_BNE   = "0100"
-  val JMP_BLT   = "0101"
-  val JMP_BGE   = "0110"
-  val JMP_BLTU  = "0111"
-  val JMP_BGEU  = "1000"
-
-  val MEM_X     = "??"
-  val MEM_LD    = "01"
-  val MEM_LDU   = "10"
-  val MEM_ST    = "11"
 
   val SIZE_B  = "b00".U
   val SIZE_H  = "b01".U
