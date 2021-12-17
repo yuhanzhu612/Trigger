@@ -38297,8 +38297,6 @@ module InstFetch(
   reg [31:0] predict_pc; // @[InstFetch.scala 95:27]
   reg [31:0] if_pc; // @[InstFetch.scala 97:22]
   reg [31:0] if_inst; // @[InstFetch.scala 98:24]
-  wire [31:0] _next_pc_T_1 = if_pc + 32'h4; // @[InstFetch.scala 99:81]
-  wire [31:0] _next_pc_T_2 = bp_io_pred_br ? bp_io_pred_pc : _next_pc_T_1; // @[InstFetch.scala 99:44]
   Brpu bp ( // @[InstFetch.scala 94:18]
     .clock(bp_clock),
     .reset(bp_reset),
@@ -38312,7 +38310,7 @@ module InstFetch(
     .io_pred_pc(bp_io_pred_pc)
   );
   assign io_imem_inst_valid = ~if_valid_in | io_if_valid_out & io_if_allow_out; // @[InstFetch.scala 59:32]
-  assign io_imem_inst_addr = csr_jmp ? csr_newpc : _next_pc_T_2; // @[InstFetch.scala 99:20]
+  assign io_imem_inst_addr = csr_jmp ? csr_newpc : bp_io_pred_pc; // @[InstFetch.scala 99:20]
   assign io_fe_pc = io_flush ? 32'h0 : if_pc; // @[InstFetch.scala 123:21]
   assign io_fe_inst = io_flush ? 32'h0 : if_inst; // @[InstFetch.scala 124:21]
   assign io_instr_valid = io_flush ? 1'h0 : 1'h1; // @[InstFetch.scala 130:24]
@@ -38357,10 +38355,8 @@ module InstFetch(
       end else begin
         predict_pc <= csr_jmp_wait_pc;
       end
-    end else if (bp_io_pred_br) begin // @[InstFetch.scala 99:44]
-      predict_pc <= bp_io_pred_pc;
     end else begin
-      predict_pc <= _next_pc_T_1;
+      predict_pc <= bp_io_pred_pc;
     end
     if (reset) begin // @[InstFetch.scala 97:22]
       if_pc <= 32'h7ffffffc; // @[InstFetch.scala 97:22]
@@ -38370,7 +38366,7 @@ module InstFetch(
       end else if (csr_jmp) begin // @[InstFetch.scala 99:20]
         if_pc <= csr_newpc;
       end else begin
-        if_pc <= _next_pc_T_2;
+        if_pc <= bp_io_pred_pc;
       end
     end
     if (reset) begin // @[InstFetch.scala 98:24]
