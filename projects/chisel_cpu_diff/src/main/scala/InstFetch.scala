@@ -26,6 +26,9 @@ class InstFetch extends Module {
     val if_allow_out = Input(Bool())
   })
 
+  val bp = Module(new Brpu)
+  val mispredict = io.jmp_packet.mispredict
+
   val preif_valid     = WireInit(true.B)
   val preif_ready_go  = WireInit(false.B)
   val preif_valid_out = WireInit(false.B)
@@ -48,13 +51,16 @@ class InstFetch extends Module {
   val csr_newpc = Mux(io.csr_jmp, io.newpc, csr_jmp_wait_pc)
 
   val hands_done    = io.imem.inst_ready && io.imem.inst_valid
+  val predict_done  = bp.io.pred_br && bp.io.branch
 
-  preif_ready_go  := preif_valid && hands_done && !wait_valid && !csr_jmp_wait
+  // preif_ready_go  := preif_valid && (hands_done || bp.io.pred_br) && !wait_valid && !csr_jmp_wait
+  preif_ready_go  := preif_valid && (hands_done || predict_done) && !csr_jmp_wait
   preif_valid_out := preif_ready_go
   preif_allow_out := if_allow_in
 
   if_valid        := if_valid_in
-  if_ready_go     := if_valid && !wait_valid
+  // if_ready_go     := if_valid && !wait_valid
+  if_ready_go     := if_valid
   io.if_valid_out := if_ready_go
   if_allow_in     := !if_valid || io.if_valid_out && io.if_allow_out
   when (if_allow_in){
@@ -76,9 +82,17 @@ class InstFetch extends Module {
     flush_wait := false.B
   }
 
-  when (branch_valid) {
+  // when (branch_valid) {
+  //   wait_valid := true.B
+  //   wait_pc := io.br_target
+  // }
+  // .elsewhen (io.imem.inst_ready){
+  //   wait_valid := false.B
+  // }
+
+  when (mispredict) {
     wait_valid := true.B
-    wait_pc := io.br_target
+    wait_pc := bp.io.pred_pc
   }
   .elsewhen (io.imem.inst_ready){
     wait_valid := false.B
@@ -91,18 +105,17 @@ class InstFetch extends Module {
     abandon := false.B
   }
 
-  val bp = Module(new Brpu)
   val predict_pc = RegInit(0.U(32.W))
 
   val reset_valid = RegInit(true.B) // todo: fix pc reset
   reset_valid := false.B
 
-  val if_pc = RegInit("h80000000".U(32.W))
+  val if_pc = RegInit("h7ffffffc".U(32.W))
   val if_inst = RegInit(0.U(32.W))
-  val next_pc = Mux(csr_jmp, csr_newpc, Mux(reset_valid, if_pc, bp.io.pred_pc))
+  val next_pc = Mux(csr_jmp, csr_newpc, Mux(reset_valid, if_pc + 4.U, Mux(wait_valid, wait_pc, bp.io.pred_pc)))
   //val next_pc = Mux(csr_jmp, csr_newpc, Mux(branch_valid, io.br_target, Mux(wait_valid || abandon, wait_pc, if_pc + 4.U)))
 
-  predict_pc  := next_pc
+  predict_pc  := if_pc
   bp.io.pc    := predict_pc
   bp.io.inst  := if_inst
   bp.io.branch := (if_inst === Instructions.JAL) || (if_inst === Instructions.JALR) ||
@@ -110,7 +123,7 @@ class InstFetch extends Module {
                   (if_inst === Instructions.BLT) || (if_inst === Instructions.BLTU) ||
                   (if_inst === Instructions.BGE) || (if_inst === Instructions.BGEU);
   bp.io.jmp_packet <> io.jmp_packet
-  io.predict_taken := bp.io.pred_br
+  io.predict_taken := predict_done
   io.predict_target := bp.io.pred_pc
 
   when (if_allow_in && preif_valid_out) {
@@ -123,8 +136,8 @@ class InstFetch extends Module {
   io.imem.inst_addr  := next_pc
   io.imem.inst_size  := SIZE_W
 
-  io.fe.pc    := Mux(io.flush, 0.U, if_pc)
-  io.fe.inst  := Mux(io.flush, 0.U, if_inst)
+  io.fe.pc    := Mux(io.flush || mispredict || wait_valid, 0.U, if_pc)
+  io.fe.inst  := Mux(io.flush || mispredict || wait_valid, 0.U, if_inst)
   io.fe.wen   := false.B
   io.fe.wdest := 0.U
   io.fe.wdata := 0.U

@@ -71,13 +71,13 @@ class Decode extends Module {
   val instr_valid = RegInit(false.B)
   val predict_taken = RegInit(false.B)
   val predict_target = RegInit(0.U(32.W))
+  predict_taken := io.predict_taken
+  predict_target := io.predict_target
 
   when(id_allow_in && io.if_valid_out) {
     id_pc   := Mux(io.flush, 0.U, io.fe.pc)
     id_inst := Mux(io.flush, 0.U, io.fe.inst)
     instr_valid := io.instr_valid
-    predict_taken := io.predict_taken
-    predict_target := io.predict_target
   }
 
   val id_opcode   = WireInit((0.U(TYPE_X.length.W)))
