@@ -148,25 +148,27 @@ class Csr extends Module {
 
   // difftest for CSR state
 
-  val dt_cs = Module(new DifftestCSRState)
-  dt_cs.io.clock          := clock
-  dt_cs.io.coreid         := 0.U
-  dt_cs.io.priviledgeMode := 3.U        // machine mode
-  dt_cs.io.mstatus        := mstatus
-  dt_cs.io.sstatus        := mstatus & "h80000003000de122".U
-  dt_cs.io.mepc           := mepc
-  dt_cs.io.sepc           := 0.U
-  dt_cs.io.mtval          := 0.U
-  dt_cs.io.stval          := 0.U
-  dt_cs.io.mtvec          := mtvec
-  dt_cs.io.stvec          := 0.U
-  dt_cs.io.mcause         := mcause
-  dt_cs.io.scause         := 0.U
-  dt_cs.io.satp           := 0.U
-  dt_cs.io.mip            := 0.U
-  dt_cs.io.mie            := mie
-  dt_cs.io.mscratch       := mscratch
-  dt_cs.io.sscratch       := 0.U
-  dt_cs.io.mideleg        := 0.U
-  dt_cs.io.medeleg        := 0.U
+  when (EnableCSR) {
+    val dt_cs = Module(new DifftestCSRState)
+    dt_cs.io.clock          := clock
+    dt_cs.io.coreid         := 0.U
+    dt_cs.io.priviledgeMode := 3.U        // machine mode
+    dt_cs.io.mstatus        := mstatus
+    dt_cs.io.sstatus        := mstatus & "h80000003000de122".U
+    dt_cs.io.mepc           := mepc
+    dt_cs.io.sepc           := 0.U
+    dt_cs.io.mtval          := 0.U
+    dt_cs.io.stval          := 0.U
+    dt_cs.io.mtvec          := mtvec
+    dt_cs.io.stvec          := 0.U
+    dt_cs.io.mcause         := mcause
+    dt_cs.io.scause         := 0.U
+    dt_cs.io.satp           := 0.U
+    dt_cs.io.mip            := 0.U
+    dt_cs.io.mie            := mie
+    dt_cs.io.mscratch       := mscratch
+    dt_cs.io.sscratch       := 0.U
+    dt_cs.io.mideleg        := 0.U
+    dt_cs.io.medeleg        := 0.U
+  }
 }

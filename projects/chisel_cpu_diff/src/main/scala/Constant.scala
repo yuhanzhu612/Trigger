@@ -62,6 +62,7 @@ trait Constant {
   val CLINT_MTIME     = "h000000000200bff8".U
 
   val EnableDifftest  = true.B
+  val EnableCSR       = false.B
   val EnableIcache    = true.B
   val EnableDcache    = true.B
 }
