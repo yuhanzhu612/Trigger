@@ -5,81 +5,109 @@ import Constant._
 
 class Decode extends Module {
   val io = IO(new Bundle {
-    val rs1_addr = Output(UInt(5.W))
-    val rs1_en = Output(Bool())
-    val rs1_data = Input(UInt(64.W))
-    val rs2_addr = Output(UInt(5.W))
-    val rs2_en = Output(Bool())
+    val rs1_addr  = Output(UInt(5.W))
+    val rs2_addr  = Output(UInt(5.W))
+    val rs1_data  = Input(UInt(64.W))
     val rs2_data = Input(UInt(64.W))
-    val fe  = Flipped(new BUS_R)
-    val id  = new BUS_R
+
+    val in  = Input(new BUS_R)
+    val out = Output(new BUS_R)
+
     val rs2_value = Output(UInt(64.W))
 
-    val mem_stall = Input(Bool())
-    val instr_valid = Input(Bool())
     val time_int  = Input(Bool())
 
-    val EX_wdest = Input(UInt(5.W))
-    val WB_wdest = Input(UInt(5.W))
-    val EX_result = Input(UInt(64.W))
-    val WB_result = Input(UInt(64.W))
+    // val EX_wdest = Input(UInt(5.W))
+    // val WB_wdest = Input(UInt(5.W))
+    // val EX_result = Input(UInt(64.W))
+    // val WB_result = Input(UInt(64.W))
 
-    val type_w = Output(Bool())
-
-    val idop = new MicroOp 
-
-    val inst_my = Output(Bool())
-    val skip    = Output(Bool())
-    val print   = Output(UInt(64.W))
-
-    val br_valid = Output(Bool())
-    val br_taken = Output(Bool())
-    val br_target = Output(UInt(32.W))
-    val br_stall = Output(Bool())
-
-    val flush = Input(Bool())
-
-    val if_allow_out = Output(Bool())
-    val id_valid_out = Output(Bool())
-    val if_valid_out = Input(Bool())
-    val id_allow_out = Input(Bool())
   })
 
-  val id_valid_in = RegInit(false.B)
-  val id_valid    = WireInit(false.B)
-  val id_ready_go = WireInit(false.B)
-  val id_allow_in = WireInit(false.B)
-  when (id_allow_in) {
-    id_valid_in := io.if_valid_out
-  }
-  id_valid     := id_valid_in
-  id_ready_go  := id_valid && !io.br_stall
-  io.id_valid_out := id_ready_go
-  id_allow_in  := !id_valid || io.id_valid_out && io.id_allow_out
-  io.if_allow_out := id_allow_in
-
-  val id_pc    = RegInit(0.U(32.W))
-  val id_inst  = RegInit(0.U(32.W))
-  val id_wen   = WireInit(false.B)
-  val id_wdest = Wire(UInt(5.W))
-  val id_op1   = Wire(UInt(64.W))
-  val id_op2   = Wire(UInt(64.W))
-  val instr_valid = RegInit(false.B)
-
-  when(id_allow_in && io.if_valid_out) {
-    id_pc   := Mux(io.flush, 0.U, io.fe.pc)
-    id_inst := Mux(io.flush, 0.U, io.fe.inst)
-    instr_valid := io.instr_valid
-  }
-
-  val id_opcode   = WireInit((0.U(TYPE_X.length.W)))
-  val id_aluop    = WireInit((0.U(ALU_X.length.W)))
-  val id_loadop   = WireInit((0.U(LOAD_X.length.W)))
-  val id_storeop  = WireInit((0.U(STORE_X.length.W)))
-  val id_sysop    = WireInit((0.U(SYS_X.length.W)))
-  val id_skip     = WireInit(false.B)
-
+  val id_pc   = io.in.pc
+  val id_inst = io.in.inst
+  
   val inst = id_inst
+
+  //I-TYPE 27
+  val addi    = inst === ADDI
+  val andi    = inst === ANDI
+  val xori    = inst === XORI
+  val ori     = inst === ORI
+  val slli    = inst === SLLI
+  val srli    = inst === SRLI
+  val srai    = inst === SRAI
+  val slti    = inst === SLTI
+  val sltiu   = inst === SLTIU
+  val addiw   = inst === ADDIW
+  val slliw   = inst === SLLIW
+  val srliw   = inst === SRLIW
+  val sraiw   = inst === SRAIW
+  val jalr    = inst === JALR
+  val lb      = inst === LB
+  val lh      = inst === LH
+  val lw      = inst === LW
+  val ld      = inst === LD
+  val lbu     = inst === LBU
+  val lhu     = inst === LHU
+  val lwu     = inst === LWU
+  val csrrw   = inst === CSRRW
+  val csrrs   = inst === CSRRS
+  val ecall   = inst === ECALL
+  val csrrc   = inst === CSRRC
+  val csrrsi  = inst === CSRRSI
+  val csrrci  = inst === CSRRCI
+  val typeI   = addi  || andi   || xori   || ori   || slli  || srli  ||
+                srai  || slti   || sltiu  || addiw || slliw || srliw ||
+                sraiw || jalr   || lb     || lh    || lw    || ld    || 
+                lbu   || lhu    || lwu    || csrrw || csrrs || ecall || 
+                csrrc || csrrsi || csrrci
+  //U-TYPE 2
+  val auipc   = inst === AUIPC
+  val lui     = inst === LUI
+  val typeU  = auipc || lui
+  //J-TYPE 1
+  val jal     = inst === JAL
+  val typeJ   = jal
+  //R-TYPE 16
+  val add     = inst === ADD
+  val sub     = inst === SUB
+  val sll     = inst === SLL
+  val slt     = inst === SLT
+  val sltu    = inst === SLTU
+  val xor     = inst === XOR
+  val srl     = inst === SRL
+  val sra     = inst === SRA
+  val or      = inst === OR
+  val and     = inst === AND
+  val addw    = inst === ADDW
+  val subw    = inst === SUBW
+  val sllw    = inst === SLLW
+  val srlw    = inst === SRLW
+  val sraw    = inst === SRAW
+  val mret    = inst === MRET
+  val typeR   = add  || sub  || sll  || slt  || sltu || 
+                xor  || srl  || sra  || or   || and  || 
+                addw || subw || sllw || srlw || sraw || 
+                mret
+  //B-TYPE 6
+  val beq     = inst === BEQ
+  val bne     = inst === BNE
+  val blt     = inst === BLT
+  val bge     = inst === BGE
+  val bltu    = inst === BLTU
+  val bgeu    = inst === BGEU
+  val typeB   = beq  || bne  || blt  ||
+                bge  || bltu || bgeu
+  //S-TYPE 4
+  val sb      = inst === SB
+  val sh      = inst === SH
+  val sw      = inst === SW
+  val sd      = inst === SD
+  val typeS   = sb || sh ||
+                sw || sd
+  //MY-TYPE 1
+  val my_inst = inst === MY_INST
 
   val imm_i = Cat(Fill(52, inst(31)), inst(31, 20))
   val imm_u = Cat(Fill(32, inst(31)), inst(31, 12), Fill(12, 0.U))
@@ -87,563 +115,119 @@ class Decode extends Module {
   val imm_b = Cat(Fill(43, inst(31)), inst(31), inst(7), inst(30, 25), inst(11, 8), 0.U)
   val imm_s = Cat(Fill(52, inst(31)), inst(31, 25), inst(11, 7))
 
-  io.rs1_addr := Mux(io.inst_my, "b01010".U, inst(19, 15))
-  io.rs2_addr := inst(24, 20)
-  io.rs1_en := false.B
-  io.rs2_en := false.B
+  val alu_add   = addi || addiw || jalr || lb  || lbu   || 
+                  lh   || lhu   || lw   || lwu || ld    || 
+                  sb   || sh    || sw   || sd  || auipc || 
+                  lui  || jal   || add  || addw
+  val alu_and   = andi || and 
+  val alu_sub   = subw || sub
+  val alu_slt   = slti || slt
+  val alu_sltu  = sltu || sltiu
+  val alu_xor   = xori || xor
+  val alu_or    = ori  || or
+  val alu_sll   = slli || slliw || sll || sllw
+  val alu_srl   = srli || srliw || srl || srlw
+  val alu_sra   = srai || sraiw || sra || sraw
 
-  io.type_w  := false.B  
-  io.inst_my := false.B
-  io.skip    := false.B
-  io.print   := 0.U
+  val rs1_addr  = Mux(my_inst, "b01010".U, inst(19, 15))
+  val rs2_addr  = inst(24, 20)
+  val rs1_en    = ~(ecall || auipc || lui || jal)
+  val rs2_en    = typeR || typeB || typeS
+  val rs1_data  = io.rs1_data
+  val rs2_data  = io.rs2_data
 
-  io.br_taken := false.B
-  io.br_target := 0.U
+  // val ex_wdest    = io.ex_wdest
+  // val ex_result   = io.ex_result
+  // val wb_wdest    = io.wb_wdest
+  // val wb_result   = io.wb_result
 
-  val rs1_forward = (io.rs1_addr =/= 0.U) && (io.rs1_addr === io.EX_wdest || io.rs1_addr === io.WB_wdest) && io.rs1_en
-  val rs2_forward = (io.rs2_addr =/= 0.U) && (io.rs2_addr === io.EX_wdest || io.rs2_addr === io.WB_wdest) && io.rs2_en
+  val ex_wdest    = 0.U
+  val ex_result   = 0.U
+  val wb_wdest    = 0.U
+  val wb_result   = 0.U
 
-  val rs1_value = Mux(rs1_forward, Mux(io.rs1_addr === io.EX_wdest, io.EX_result, io.WB_result), io.rs1_data)
-  val rs2_value = Mux(rs2_forward, Mux(io.rs2_addr === io.EX_wdest, io.EX_result, io.WB_result), io.rs2_data)
-
-  when (inst === ADDI) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-  }
-
-  when (inst === ANDI) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_AND".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-  }
-
-  when (inst === XORI) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_XOR".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-  }
-
-  when (inst === ORI) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_OR".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-  }
-
-  when (inst === SLLI) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_SLL".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-  }
-
-  when (inst === SRLI) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_SRL".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-  }
-
-  when (inst === SRAI) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_SRA".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-  }
-
-  when (inst === SLTI) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_SLT".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-  }
-
-  when (inst === SLTIU) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_SLTU".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-  }
-
-  when (inst === ADDIW) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    io.type_w := true.B
-  }
+  val t_int       = io.time_int
   
-  when (inst === SLLIW) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_SLL".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    io.type_w := true.B
-  }
-  
-  when (inst === SRLIW) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_SRL".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    io.type_w := true.B
-  }
+  val rs1_forward = (rs1_addr =/= 0.U) && (rs1_addr === ex_wdest || rs1_addr === wb_wdest) && rs1_en
+  val rs2_forward = (rs2_addr =/= 0.U) && (rs2_addr === ex_wdest || rs2_addr === wb_wdest) && rs2_en
 
-  when (inst === SRAIW) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_SRA".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    io.type_w := true.B
-  }
+  val rs1_value = Mux(rs1_forward, Mux(rs1_addr === ex_wdest, ex_result, wb_result), rs1_data)
+  val rs2_value = Mux(rs2_forward, Mux(rs2_addr === ex_wdest, ex_result, wb_result), rs2_data)
 
-  when (inst === JALR) {
-    id_opcode := s"b$TYPE_J".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    io.br_taken := true.B
-    io.br_target := rs1_value + imm_i
-  }
+  val id_wen    = ~(ecall || mret || my_inst || typeS || typeB)
+  val id_wdest  = Mux(id_wen, inst(11, 7), 0.U)
+  val id_wdata  = 0.U
+  val id_opcode = (Fill(TYPE_X.length, typeI) & s"b$TYPE_I".U) | 
+                  (Fill(TYPE_X.length, typeU) & s"b$TYPE_U".U) |  
+                  (Fill(TYPE_X.length, typeJ) & s"b$TYPE_J".U) |  
+                  (Fill(TYPE_X.length, typeR) & s"b$TYPE_R".U) |
+                  (Fill(TYPE_X.length, typeB) & s"b$TYPE_B".U) |
+                  (Fill(TYPE_X.length, typeS) & s"b$TYPE_S".U)
+  val id_aluop  = (Fill(ALU_X.length, alu_add ) & s"b$ALU_ADD".U ) | 
+                  (Fill(ALU_X.length, alu_and ) & s"b$ALU_AND".U ) |  
+                  (Fill(ALU_X.length, alu_or  ) & s"b$ALU_OR".U  ) |  
+                  (Fill(ALU_X.length, alu_sll ) & s"b$ALU_SLL".U ) |
+                  (Fill(ALU_X.length, alu_slt ) & s"b$ALU_SLT".U ) |
+                  (Fill(ALU_X.length, alu_sltu) & s"b$ALU_SLTU".U) |
+                  (Fill(ALU_X.length, alu_sra ) & s"b$ALU_SRA".U ) |
+                  (Fill(ALU_X.length, alu_srl ) & s"b$ALU_SRL".U ) |
+                  (Fill(ALU_X.length, alu_sub ) & s"b$ALU_SUB".U ) |
+                  (Fill(ALU_X.length, alu_xor ) & s"b$ALU_XOR".U )
+  val id_loadop = (Fill(LOAD_X.length, lb ) & s"b$LOAD_LB".U ) | 
+                  (Fill(LOAD_X.length, lh ) & s"b$LOAD_LH".U ) |  
+                  (Fill(LOAD_X.length, lw ) & s"b$LOAD_LW".U ) |  
+                  (Fill(LOAD_X.length, ld ) & s"b$LOAD_LD".U ) |
+                  (Fill(LOAD_X.length, lbu) & s"b$LOAD_LBU".U) |
+                  (Fill(LOAD_X.length, lhu) & s"b$LOAD_LHU".U) |
+                  (Fill(LOAD_X.length, lwu) & s"b$LOAD_LWU".U)
+  val id_storeop= (Fill(STORE_X.length, sb) & s"b$STORE_SB".U) |  
+                  (Fill(STORE_X.length, sh) & s"b$STORE_SH".U) |
+                  (Fill(STORE_X.length, sw) & s"b$STORE_SW".U) |
+                  (Fill(STORE_X.length, sd) & s"b$STORE_SD".U)
+  val id_sysop  = (Fill(SYS_X.length, csrrs ) & s"b$SYS_CSRRS".U ) |
+                  (Fill(SYS_X.length, csrrsi) & s"b$SYS_CSRRSI".U) |
+                  (Fill(SYS_X.length, csrrc ) & s"b$SYS_CSRRC".U ) |
+                  (Fill(SYS_X.length, csrrci) & s"b$SYS_CSRRCI".U) |
+                  (Fill(SYS_X.length, csrrw ) & s"b$SYS_CSRRW".U ) |
+                  (Fill(SYS_X.length, ecall ) & s"b$SYS_ECALL".U ) |
+                  (Fill(SYS_X.length, mret  ) & s"b$SYS_MRET".U  ) |
+                  (Fill(SYS_X.length, t_int ) & s"b$SYS_INT".U   )
+  val id_op1    = MuxLookup(id_opcode, 0.U, Array(
+                    s"b$TYPE_I".U -> rs1_value,
+                    s"b$TYPE_U".U -> Mux(id_inst === AUIPC, id_pc, 0.U),
+                    s"b$TYPE_J".U -> id_pc,
+                    s"b$TYPE_R".U -> rs1_value,
+                    s"b$TYPE_B".U -> rs1_value,
+                    s"b$TYPE_S".U -> rs1_value,
+                  ))
+  val id_op2    = MuxLookup(id_opcode, 0.U, Array(
+                    s"b$TYPE_I".U -> imm_i,
+                    s"b$TYPE_U".U -> imm_u,
+                    s"b$TYPE_J".U -> 4.U,
+                    s"b$TYPE_R".U -> rs2_value,
+                    s"b$TYPE_B".U -> rs2_value,
+                    s"b$TYPE_S".U -> imm_s,
+                  ))
+  val id_typew  = addiw || slliw || srliw || sraiw || addw ||
+                  subw  || sllw  || srlw  || sraw
 
-  when (inst === LB) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    id_loadop := s"b$LOAD_LB".U
-  }
+  io.rs1_addr     := rs1_addr
+  io.rs2_addr     := rs2_addr
 
-  when (inst === LBU) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    id_loadop := s"b$LOAD_LBU".U
-  }
+  //Next
+  io.out.pc       := id_pc
+  io.out.inst     := id_inst
+  io.out.wen      := id_wen
+  io.out.wdest    := id_wdest
+  io.out.wdata    := id_wdata
+  io.out.op1      := id_op1
+  io.out.op2      := id_op2
+  io.out.typew    := id_typew
+  io.out.opcode   := id_opcode
+  io.out.aluop    := id_aluop
+  io.out.loadop   := id_loadop
+  io.out.storeop  := id_storeop
+  io.out.sysop    := id_sysop
 
-  when (inst === LH) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    id_loadop := s"b$LOAD_LH".U
-  }
-
-  when (inst === LHU) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    id_loadop := s"b$LOAD_LHU".U
-  }
-
-  when (inst === LW) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    id_loadop := s"b$LOAD_LW".U
-  }
-
-  when (inst === LWU) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    id_loadop := s"b$LOAD_LWU".U
-  }
-
-  when (inst === LD) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    id_loadop := s"b$LOAD_LD".U
-  }
-
-  when (inst === CSRRS) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    id_sysop := s"b$SYS_CSRRS".U
-  }
-
-  when (inst === CSRRSI) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    id_sysop := s"b$SYS_CSRRSI".U
-  }
-
-  when (inst === CSRRC) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    id_sysop := s"b$SYS_CSRRC".U
-  }
-
-  when (inst === CSRRCI) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    id_sysop := s"b$SYS_CSRRCI".U
-  }
-
-  when (inst === CSRRW) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    id_sysop := s"b$SYS_CSRRW".U
-  }
-
-  when (inst === ECALL) {
-    id_opcode := s"b$TYPE_I".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := false.B
-    io.rs2_en := false.B
-    id_wen    := false.B
-    id_sysop := s"b$SYS_ECALL".U
-  }
-
-  when (inst === SB) {
-    id_opcode := s"b$TYPE_S".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen  := false.B
-    id_storeop := s"b$STORE_SB".U
-  }
-
-  when (inst === SH) {
-    id_opcode := s"b$TYPE_S".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen  := false.B
-    id_storeop := s"b$STORE_SH".U
-  }
-
-  when (inst === SW) {
-    id_opcode := s"b$TYPE_S".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen  := false.B
-    id_storeop := s"b$STORE_SW".U
-  }
-
-  when (inst === SD) {
-    id_opcode := s"b$TYPE_S".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen  := false.B
-    id_storeop := s"b$STORE_SD".U
-  }
-
-  when (inst === AUIPC) {
-    id_opcode := s"b$TYPE_U".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := false.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-  }
-
-  when (inst === LUI) {
-    id_opcode := s"b$TYPE_U".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := false.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-  }
-
-  when (inst === JAL) {
-    id_opcode := s"b$TYPE_J".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := false.B
-    io.rs2_en := false.B
-    id_wen    := true.B
-    io.br_taken := true.B
-    io.br_target := id_pc + imm_j
-  }
-
-  when (inst === ADD) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-  }
-
-  when (inst === SUB) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_SUB".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-  }
-
-  when (inst === SLL) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_SLL".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-  }
-
-  when (inst === SLT) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_SLT".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-  }
-
-  when (inst === SLTU) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_SLTU".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-  }
-
-  when (inst === XOR) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_XOR".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-  }
-
-  when (inst === SRL) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_SRL".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-  }
-
-  when (inst === SRA) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_SRA".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-  }
-
-  when (inst === OR) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_OR".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-  }
-  
-  when (inst === AND) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_AND".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-  }
-
-  when (inst === ADDW) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_ADD".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-    io.type_w := true.B
-  }
-
-  when (inst === SUBW) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_SUB".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-    io.type_w := true.B
-  }
-
-  when (inst === SLLW) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_SLL".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-    io.type_w := true.B
-  }
-
-  when (inst === SRLW) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_SRL".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-    io.type_w := true.B
-  }
-
-  when (inst === SRAW) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_SRA".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := true.B
-    io.type_w := true.B
-  }
-
-  when (inst === MRET) {
-    id_opcode := s"b$TYPE_R".U
-    id_aluop  := s"b$ALU_SRA".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen    := false.B
-    id_sysop  := s"b$SYS_MRET".U
-  }
-
-  when (inst === BEQ) {
-    id_opcode := s"b$TYPE_B".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen  := false.B
-    io.br_taken := Mux(rs1_value.asSInt() === rs2_value.asSInt(), true.B, false.B)
-    io.br_target := id_pc + imm_b
-  }
-
-  when (inst === BNE) {
-    id_opcode := s"b$TYPE_B".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen  := false.B
-    io.br_taken := Mux(rs1_value.asSInt() =/= rs2_value.asSInt(), true.B, false.B)
-    io.br_target := id_pc + imm_b
-  }
-
-  when (inst === BLT) {
-    id_opcode := s"b$TYPE_B".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen  := false.B
-    io.br_taken := Mux(rs1_value.asSInt() < rs2_value.asSInt(), true.B, false.B)
-    io.br_target := id_pc + imm_b
-  }
-
-  when (inst === BGE) {
-    id_opcode := s"b$TYPE_B".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen  := false.B
-    io.br_taken := Mux(rs1_value.asSInt() >= rs2_value.asSInt(), true.B, false.B)
-    io.br_target := id_pc + imm_b
-  }
-
-  when (inst === BLTU) {
-    id_opcode := s"b$TYPE_B".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen  := false.B
-    io.br_taken := Mux(rs1_value < rs2_value, true.B, false.B)
-    io.br_target := id_pc + imm_b
-  }
-
-  when (inst === BGEU) {
-    id_opcode := s"b$TYPE_B".U
-    io.rs1_en := true.B
-    io.rs2_en := true.B
-    id_wen  := false.B
-    io.br_taken := Mux(rs1_value >= rs2_value, true.B, false.B)
-    io.br_target := id_pc + imm_b
-  }
-
-  when (inst === MY_INST) {
-    io.inst_my:= true.B
-    io.print  := id_op1
-    id_opcode := s"b$TYPE_I".U
-    io.rs1_en := true.B
-    io.rs2_en := false.B
-    id_wen  := false.B
-  }
-
-  when (instr_valid && io.time_int) {
-    id_wen  := false.B
-    id_sysop := s"b$SYS_INT".U
-  }
-  
-  id_skip := inst === MY_INST || inst === 0.U
-
-  io.br_valid := id_ready_go
-  io.br_stall := (io.mem_stall && (io.rs1_addr =/= 0.U) && (io.rs1_addr === io.EX_wdest) && io.rs1_en && id_valid) ||
-                 (io.mem_stall && (io.rs2_addr =/= 0.U) && (io.rs2_addr === io.EX_wdest) && io.rs2_en && id_valid)
-
-  id_op1 := MuxLookup(id_opcode, 0.U, Array(
-          s"b$TYPE_I".U -> rs1_value,
-          s"b$TYPE_U".U -> Mux(id_inst === AUIPC, id_pc, 0.U),
-          s"b$TYPE_J".U -> id_pc,
-          s"b$TYPE_R".U -> rs1_value,
-          s"b$TYPE_B".U -> rs1_value,
-          s"b$TYPE_S".U -> rs1_value,
-  ))
-  id_op2 := MuxLookup(id_opcode, 0.U, Array(
-    s"b$TYPE_I".U -> imm_i,
-    s"b$TYPE_U".U -> imm_u,
-    s"b$TYPE_J".U -> 4.U,
-    s"b$TYPE_R".U -> rs2_value,
-    s"b$TYPE_B".U -> rs2_value,
-    s"b$TYPE_S".U -> imm_s,
-  ))
-
-  id_wdest := Mux(id_wen, inst(11, 7), 0.U) 
-
-  io.id.pc    := id_pc
-  io.id.inst  := id_inst
-  io.id.wen   := id_wen
-  io.id.wdest := id_wdest
-  io.id.wdata := 0.U
-  io.id.op1   := id_op1
-  io.id.op2   := id_op2
-  io.rs2_value:= rs2_value
-
-  io.idop.opcode  := Mux(io.flush, 0.U, id_opcode)
-  io.idop.aluop   := Mux(io.flush, 0.U, id_aluop)
-  io.idop.loadop  := Mux(io.flush, 0.U, id_loadop)
-  io.idop.storeop := Mux(io.flush, 0.U, id_storeop)
-  io.idop.sysop   := Mux(io.flush, 0.U, id_sysop)
-  io.skip         := Mux(io.flush, 0.U, id_skip)
-
+  io.rs2_value    := rs2_value
 }

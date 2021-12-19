@@ -10,96 +10,74 @@ class Core extends Module {
     val br_stall = Output(Bool())
   })
 
+  io.br_stall := false.B
+
   val fetch = Module(new InstFetch)
   val decode = Module(new Decode)
   val execution = Module(new Execution)
   val writeback = Module(new WriteBack)
   val rf = Module(new RegFile)
-  val csr = Module(new Csr)
-  val clint = Module(new Clint)
+  //val csr = Module(new Csr)
+  //val clint = Module(new Clint)
 
-  val inst_my = RegInit(false.B)
-  val print   = RegInit(0.U(64.W))
-  val skip    = writeback.io.skip || (csr.io.inst(31, 20) === Csrs.mcycle && csr.io.sysop =/= 0.U)
+  val stall = false.B
 
-  io.br_stall := decode.io.br_stall
+  fetch.io.imem           <> io.imem
+  fetch.io.stall          := stall
 
+  decode.io.in            := fetch.io.out 
+  decode.io.rs1_data      := rf.io.rs1_data
+  decode.io.rs2_data      := rf.io.rs2_data
+  decode.io.time_int      := false.B
+  // decode.io.EX_wdest        := execution.io.EX_wdest
+  // decode.io.EX_result       := execution.io.EX_result
+  // decode.io.WB_wdest        := writeback.io.WB_wdest
+  // decode.io.WB_result       := writeback.io.WB_result
+  // decode.io.time_int        := clint.io.time_int
 
-  fetch.io.imem             <> io.imem
-  fetch.io.br_valid         := decode.io.br_valid
-  fetch.io.br_taken         := decode.io.br_taken
-  fetch.io.br_target        := decode.io.br_target
-  fetch.io.csr_jmp          := csr.io.csr_jmp
-  fetch.io.newpc            := csr.io.newpc
-  fetch.io.flush            := writeback.io.flush
-  fetch.io.if_allow_out     := decode.io.if_allow_out
+  execution.io.dmem       <> io.dmem
+  execution.io.in         := decode.io.out 
+  execution.io.rs2_value  := decode.io.rs2_value
 
-  decode.io.rs1_data        := rf.io.rs1_data
-  decode.io.rs2_data        := rf.io.rs2_data
-  decode.io.if_valid_out    := fetch.io.if_valid_out
-  decode.io.id_allow_out    := execution.io.id_allow_out
-  decode.io.fe              <> fetch.io.fe
-  decode.io.mem_stall       := execution.io.mem_stall
-  decode.io.instr_valid     := fetch.io.instr_valid
-  decode.io.EX_wdest        := execution.io.EX_wdest
-  decode.io.EX_result       := execution.io.EX_result
-  decode.io.WB_wdest        := writeback.io.WB_wdest
-  decode.io.WB_result       := writeback.io.WB_result
-  decode.io.flush           := writeback.io.flush
-  decode.io.time_int        := clint.io.time_int
+  writeback.io.in         := execution.io.out
 
-  execution.io.dmem         <> io.dmem
-  execution.io.type_w       := decode.io.type_w
-  execution.io.csr_rdata    := csr.io.csr_rdata
-  execution.io.cmp_rdata    := clint.io.cmp_rdata
-  execution.io.idop         <> decode.io.idop
-  execution.io.id           <> decode.io.id
-  execution.io.rs2_value    := decode.io.rs2_value
-  execution.io.id_valid_out := decode.io.id_valid_out
-  execution.io.ex_allow_out := writeback.io.ex_allow_out
-  execution.io.id_skip      := decode.io.skip
-  execution.io.flush        := writeback.io.flush
+  rf.io.rs1_addr          := decode.io.rs1_addr
+  rf.io.rs2_addr          := decode.io.rs2_addr
+  rf.io.wen               := writeback.io.wen
+  rf.io.wdest             := writeback.io.wdest
+  rf.io.wdata             := writeback.io.wdata
 
-  writeback.io.ex_sysop     := execution.io.ex_sysop
-  writeback.io.ex           <> execution.io.ex
-  writeback.io.ex_valid_out := execution.io.ex_valid_out
-  writeback.io.ex_skip      := execution.io.skip
+  // csr.io.in1                := writeback.io.op1
+  // csr.io.sysop              := writeback.io.sysop
+  // csr.io.inst               := execution.io.ex.inst
+  // csr.io.pc                 := writeback.io.wb.pc
+  // csr.io.flush              := writeback.io.flush
 
-  rf.io.rs1_addr            := decode.io.rs1_addr
-  rf.io.rs2_addr            := decode.io.rs2_addr
-  rf.io.rd_addr             := writeback.io.wb.wdest
-  rf.io.rd_en               := writeback.io.wb.wen
-  rf.io.rd_data             := writeback.io.wb.wdata
-
-  csr.io.in1                := writeback.io.wb.op1
-  csr.io.sysop              := writeback.io.sysop
-  csr.io.inst               := execution.io.ex.inst
-  csr.io.pc                 := writeback.io.wb.pc
-  csr.io.flush              := writeback.io.flush
-
-  clint.io.mstatus          := csr.io.mstatus
-  clint.io.mie              := csr.io.mie
-  clint.io.cmp_ren          := execution.io.cmp_ren
-  clint.io.cmp_wen          := execution.io.cmp_wen
-  clint.io.cmp_addr         := execution.io.cmp_addr
-  clint.io.cmp_wdata        := execution.io.cmp_wdata
+  // clint.io.mstatus          := csr.io.mstatus
+  // clint.io.mie              := csr.io.mie
+  // clint.io.cmp_ren          := execution.io.cmp_ren
+  // clint.io.cmp_wen          := execution.io.cmp_wen
+  // clint.io.cmp_addr         := execution.io.cmp_addr
+  // clint.io.cmp_wdata        := execution.io.cmp_wdata
 
 
   /* ----- Difftest ------------------------------ */
 
-  val valid = writeback.io.ready_cmt
+  val valid   = writeback.io.ready_cmt
+  // val inst_my = writeback.io.ready_cmt
+  // val print   = writeback.io.ready_cmt
+  //val skip    = writeback.io.skip || (csr.io.inst(31, 20) === Csrs.mcycle && csr.io.sysop =/= 0.U)
+  val skip = false.B
 
-  inst_my := decode.io.inst_my
-  when (inst_my) {
-    print := decode.io.print
-  }
-  when (valid) {
-    printf("%c", print)
-  }
+  // when (valid && inst_my) {
+  //   printf("%c", print)
+  // }
 
-  val intr = writeback.io.intr
-  val intr_no = Mux(intr, writeback.io.intr_no, 0.U)
-  val exceptionPC = Mux(intr, writeback.io.wb.pc, 0.U)
+  // val intr = writeback.io.intr
+  // val intr_no = Mux(intr, writeback.io.intr_no, 0.U)
+  // val exceptionPC = Mux(intr, writeback.io.wb.pc, 0.U)
+  val intr_no = 0.U
+  val exceptionPC = 0.U
 
   when (EnableDifftest) {
     val dt_ic = Module(new DifftestInstrCommit)
@@ -107,15 +85,15 @@ class Core extends Module {
     dt_ic.io.coreid   := 0.U
     dt_ic.io.index    := 0.U
     dt_ic.io.valid    := RegNext(valid)
-    dt_ic.io.pc       := RegNext(writeback.io.wb.pc)
-    dt_ic.io.instr    := RegNext(writeback.io.wb.inst)
+    dt_ic.io.pc       := RegNext(writeback.io.pc)
+    dt_ic.io.instr    := RegNext(writeback.io.inst)
     dt_ic.io.special  := 0.U
     dt_ic.io.skip     := RegNext(skip)
     dt_ic.io.isRVC    := false.B
     dt_ic.io.scFailed := false.B
-    dt_ic.io.wen      := RegNext(writeback.io.wb.wen)
-    dt_ic.io.wdata    := RegNext(writeback.io.wb.wdata)
-    dt_ic.io.wdest    := RegNext(writeback.io.wb.wdest)
+    dt_ic.io.wen      := RegNext(writeback.io.wen)
+    dt_ic.io.wdata    := RegNext(writeback.io.wdata)
+    dt_ic.io.wdest    := RegNext(writeback.io.wdest)
 
     val dt_ae = Module(new DifftestArchEvent)
     dt_ae.io.clock        := clock
@@ -136,9 +114,9 @@ class Core extends Module {
     val dt_te = Module(new DifftestTrapEvent)
     dt_te.io.clock    := clock
     dt_te.io.coreid   := 0.U
-    dt_te.io.valid    := (writeback.io.wb.inst === "h0000006b".U)
+    dt_te.io.valid    := (writeback.io.inst === "h0000006b".U)
     dt_te.io.code     := rf_a0(2, 0)
-    dt_te.io.pc       := writeback.io.wb.pc
+    dt_te.io.pc       := writeback.io.pc
     dt_te.io.cycleCnt := cycle_cnt
     dt_te.io.instrCnt := instr_cnt
 
