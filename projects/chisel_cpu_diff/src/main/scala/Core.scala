@@ -120,26 +120,26 @@ class Core extends Module {
     dt_te.io.cycleCnt := cycle_cnt
     dt_te.io.instrCnt := instr_cnt
 
-    // val dt_cs = Module(new DifftestCSRState)
-    // dt_cs.io.clock          := clock
-    // dt_cs.io.coreid         := 0.U
-    // dt_cs.io.priviledgeMode := 3.U  // Machine mode
-    // dt_cs.io.mstatus        := 0.U
-    // dt_cs.io.sstatus        := 0.U
-    // dt_cs.io.mepc           := 0.U
-    // dt_cs.io.sepc           := 0.U
-    // dt_cs.io.mtval          := 0.U
-    // dt_cs.io.stval          := 0.U
-    // dt_cs.io.mtvec          := 0.U
-    // dt_cs.io.stvec          := 0.U
-    // dt_cs.io.mcause         := 0.U
-    // dt_cs.io.scause         := 0.U
-    // dt_cs.io.satp           := 0.U
-    // dt_cs.io.mip            := 0.U
-    // dt_cs.io.mie            := 0.U
-    // dt_cs.io.mscratch       := 0.U
-    // dt_cs.io.sscratch       := 0.U
-    // dt_cs.io.mideleg        := 0.U
-    // dt_cs.io.medeleg        := 0.U
+    val dt_cs = Module(new DifftestCSRState)
+    dt_cs.io.clock          := clock
+    dt_cs.io.coreid         := 0.U
+    dt_cs.io.priviledgeMode := 3.U  // Machine mode
+    dt_cs.io.mstatus        := 0.U
+    dt_cs.io.sstatus        := 0.U
+    dt_cs.io.mepc           := 0.U
+    dt_cs.io.sepc           := 0.U
+    dt_cs.io.mtval          := 0.U
+    dt_cs.io.stval          := 0.U
+    dt_cs.io.mtvec          := 0.U
+    dt_cs.io.stvec          := 0.U
+    dt_cs.io.mcause         := 0.U
+    dt_cs.io.scause         := 0.U
+    dt_cs.io.satp           := 0.U
+    dt_cs.io.mip            := 0.U
+    dt_cs.io.mie            := 0.U
+    dt_cs.io.mscratch       := 0.U
+    dt_cs.io.sscratch       := 0.U
+    dt_cs.io.mideleg        := 0.U
+    dt_cs.io.medeleg        := 0.U
   }
 }
