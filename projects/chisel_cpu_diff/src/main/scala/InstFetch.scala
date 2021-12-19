@@ -10,7 +10,7 @@ class InstFetch extends Module {
     val out  = Output(new BUS_R)
   })
 
-  val if_pc = RegInit("h7ffffffc".U(32.W))
+  val if_pc = RegInit("h80000000".U(32.W))
   val if_inst = RegInit(0.U(32.W))
 
   // val bp = Module(new BrPredictor)
@@ -29,18 +29,18 @@ class InstFetch extends Module {
   when (state === s_reset) {
     state := s_init
   } .elsewhen (state === s_init || state === s_idle) {
-    if_pc := bp_pred_pc
     state := s_wait
   } .elsewhen (state === s_wait) {
     when (io.imem.inst_ready) {
+      if_pc   := bp_pred_pc
       if_inst := io.imem.inst_read
-      state := Mux(io.stall, s_stall, s_idle)
+      state   := Mux(io.stall, s_stall, s_idle)
     }
   } .otherwise {  // s_stall
     state := Mux(io.stall, s_stall, s_idle)
   }
 
-  io.imem.inst_valid := true.B
+  io.imem.inst_valid := (state === s_idle) || (state === s_init)
   io.imem.inst_req   := false.B
   io.imem.inst_addr  := if_pc
   io.imem.inst_size  := SIZE_W
