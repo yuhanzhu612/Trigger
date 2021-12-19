@@ -1,6 +1,7 @@
 module InstFetch(
   input         clock,
   input         reset,
+  input         io_imem_inst_ready,
   output [31:0] io_imem_inst_addr,
   input  [31:0] io_imem_inst_read,
   output [31:0] io_out_pc,
@@ -9,23 +10,44 @@ module InstFetch(
 `ifdef RANDOMIZE_REG_INIT
   reg [31:0] _RAND_0;
   reg [31:0] _RAND_1;
+  reg [31:0] _RAND_2;
 `endif // RANDOMIZE_REG_INIT
   reg [31:0] if_pc; // @[InstFetch.scala 13:22]
   reg [31:0] if_inst; // @[InstFetch.scala 14:24]
-  wire [31:0] _if_pc_T_1 = if_pc + 32'h4; // @[InstFetch.scala 25:41]
-  assign io_imem_inst_addr = if_pc; // @[InstFetch.scala 30:22]
-  assign io_out_pc = if_pc; // @[InstFetch.scala 33:19]
-  assign io_out_inst = if_inst; // @[InstFetch.scala 34:19]
+  wire [31:0] bp_pred_pc = if_pc + 32'h4; // @[InstFetch.scala 17:26]
+  reg [2:0] state; // @[InstFetch.scala 27:22]
+  wire [31:0] _GEN_0 = io_imem_inst_ready ? io_imem_inst_read : if_inst; // @[InstFetch.scala 35:31 InstFetch.scala 36:15 InstFetch.scala 14:24]
+  wire [2:0] _GEN_1 = io_imem_inst_ready ? 3'h2 : state; // @[InstFetch.scala 35:31 InstFetch.scala 37:13 InstFetch.scala 27:22]
+  assign io_imem_inst_addr = if_pc; // @[InstFetch.scala 45:22]
+  assign io_out_pc = if_pc; // @[InstFetch.scala 48:19]
+  assign io_out_inst = if_inst; // @[InstFetch.scala 49:19]
   always @(posedge clock) begin
     if (reset) begin // @[InstFetch.scala 13:22]
-      if_pc <= 32'h80000000; // @[InstFetch.scala 13:22]
-    end else begin
-      if_pc <= _if_pc_T_1; // @[InstFetch.scala 25:11]
+      if_pc <= 32'h7ffffffc; // @[InstFetch.scala 13:22]
+    end else if (!(state == 3'h0)) begin // @[InstFetch.scala 29:28]
+      if (state == 3'h1 | state == 3'h2) begin // @[InstFetch.scala 31:54]
+        if_pc <= bp_pred_pc; // @[InstFetch.scala 32:11]
+      end
     end
     if (reset) begin // @[InstFetch.scala 14:24]
       if_inst <= 32'h0; // @[InstFetch.scala 14:24]
+    end else if (!(state == 3'h0)) begin // @[InstFetch.scala 29:28]
+      if (!(state == 3'h1 | state == 3'h2)) begin // @[InstFetch.scala 31:54]
+        if (state == 3'h3) begin // @[InstFetch.scala 34:34]
+          if_inst <= _GEN_0;
+        end
+      end
+    end
+    if (reset) begin // @[InstFetch.scala 27:22]
+      state <= 3'h0; // @[InstFetch.scala 27:22]
+    end else if (state == 3'h0) begin // @[InstFetch.scala 29:28]
+      state <= 3'h1; // @[InstFetch.scala 30:11]
+    end else if (state == 3'h1 | state == 3'h2) begin // @[InstFetch.scala 31:54]
+      state <= 3'h3; // @[InstFetch.scala 33:11]
+    end else if (state == 3'h3) begin // @[InstFetch.scala 34:34]
+      state <= _GEN_1;
     end else begin
-      if_inst <= io_imem_inst_read; // @[InstFetch.scala 26:11]
+      state <= 3'h2; // @[InstFetch.scala 40:11]
     end
   end
 // Register and memory initialization
@@ -68,6 +90,8 @@ initial begin
   if_pc = _RAND_0[31:0];
   _RAND_1 = {1{`RANDOM}};
   if_inst = _RAND_1[31:0];
+  _RAND_2 = {1{`RANDOM}};
+  state = _RAND_2[2:0];
 `endif // RANDOMIZE_REG_INIT
   `endif // RANDOMIZE
 end // initial
@@ -695,6 +719,7 @@ endmodule
 module Core(
   input         clock,
   input         reset,
+  input         io_imem_inst_ready,
   output [31:0] io_imem_inst_addr,
   input  [31:0] io_imem_inst_read,
   output        io_dmem_data_valid,
@@ -715,6 +740,7 @@ module Core(
 `endif // RANDOMIZE_REG_INIT
   wire  fetch_clock; // @[Core.scala 15:21]
   wire  fetch_reset; // @[Core.scala 15:21]
+  wire  fetch_io_imem_inst_ready; // @[Core.scala 15:21]
   wire [31:0] fetch_io_imem_inst_addr; // @[Core.scala 15:21]
   wire [31:0] fetch_io_imem_inst_read; // @[Core.scala 15:21]
   wire [31:0] fetch_io_out_pc; // @[Core.scala 15:21]
@@ -815,6 +841,7 @@ module Core(
   InstFetch fetch ( // @[Core.scala 15:21]
     .clock(fetch_clock),
     .reset(fetch_reset),
+    .io_imem_inst_ready(fetch_io_imem_inst_ready),
     .io_imem_inst_addr(fetch_io_imem_inst_addr),
     .io_imem_inst_read(fetch_io_imem_inst_read),
     .io_out_pc(fetch_io_out_pc),
@@ -925,6 +952,7 @@ module Core(
   assign io_dmem_data_write = execution_io_dmem_data_write; // @[Core.scala 38:27]
   assign fetch_clock = clock;
   assign fetch_reset = reset;
+  assign fetch_io_imem_inst_ready = io_imem_inst_ready; // @[Core.scala 25:27]
   assign fetch_io_imem_inst_read = io_imem_inst_read; // @[Core.scala 25:27]
   assign decode_io_rs1_data = rf_io_rs1_data; // @[Core.scala 29:27]
   assign decode_io_rs2_data = rf_io_rs2_data; // @[Core.scala 30:27]
@@ -1055,6 +1083,7 @@ endmodule
 module Icache(
   input          clock,
   input          reset,
+  output         io_imem_inst_ready,
   input  [31:0]  io_imem_inst_addr,
   output [31:0]  io_imem_inst_read,
   output         io_out_inst_valid,
@@ -1578,7 +1607,8 @@ module Icache(
   reg [31:0] _RAND_512;
   reg [31:0] _RAND_513;
   reg [31:0] _RAND_514;
-  reg [127:0] _RAND_515;
+  reg [31:0] _RAND_515;
+  reg [127:0] _RAND_516;
 `endif // RANDOMIZE_REG_INIT
   wire [127:0] req_Q; // @[Icache.scala 126:19]
   wire  req_CLK; // @[Icache.scala 126:19]
@@ -2613,6 +2643,7 @@ module Icache(
   wire  _GEN_510 = 8'hfe == req_index ? valid_254 : _GEN_509; // @[Icache.scala 33:45 Icache.scala 33:45]
   wire  _GEN_511 = 8'hff == req_index ? valid_255 : _GEN_510; // @[Icache.scala 33:45 Icache.scala 33:45]
   wire  cache_hit = _GEN_255 == req_tag & _GEN_511; // @[Icache.scala 33:45]
+  reg  inst_ready; // @[Icache.scala 42:28]
   wire [127:0] cache_data_out = req_Q; // @[Icache.scala 35:28 Icache.scala 132:18]
   wire [31:0] _inst_read_T_6 = 2'h1 == req_offset[3:2] ? cache_data_out[63:32] : cache_data_out[31:0]; // @[Mux.scala 80:57]
   wire [31:0] _inst_read_T_8 = 2'h2 == req_offset[3:2] ? cache_data_out[95:64] : _inst_read_T_6; // @[Mux.scala 80:57]
@@ -3646,6 +3677,7 @@ module Icache(
   wire [19:0] _GEN_1791 = cache_hit ? _GEN_1023 : tag_253; // @[Icache.scala 76:29 Icache.scala 17:24]
   wire [19:0] _GEN_1792 = cache_hit ? _GEN_1024 : tag_254; // @[Icache.scala 76:29 Icache.scala 17:24]
   wire [19:0] _GEN_1793 = cache_hit ? _GEN_1025 : tag_255; // @[Icache.scala 76:29 Icache.scala 17:24]
+  wire  _GEN_2050 = cache_hit | inst_ready; // @[Icache.scala 76:29 Icache.scala 80:27 Icache.scala 42:28]
   wire [2:0] _GEN_2051 = cache_hit ? 3'h0 : 3'h3; // @[Icache.scala 76:29 Icache.scala 81:27 Icache.scala 84:21]
   wire  _T_3 = 3'h3 == state; // @[Conditional.scala 37:30]
   wire  _T_4 = ~cache_fill; // @[Icache.scala 89:13]
@@ -3657,6 +3689,7 @@ module Icache(
   wire  _GEN_2830 = io_out_inst_ready ? 1'h0 : _T_4; // @[Icache.scala 99:29 Icache.scala 103:21]
   wire  _T_5 = 3'h4 == state; // @[Conditional.scala 37:30]
   wire  _GEN_3599 = _T_5 ? 1'h0 : cache_fill; // @[Conditional.scala 39:67 Icache.scala 108:25 Icache.scala 51:28]
+  wire  _GEN_3600 = _T_5 | inst_ready; // @[Conditional.scala 39:67 Icache.scala 109:25 Icache.scala 42:28]
   wire  _GEN_3601 = _T_5 ? 1'h0 : cache_wen; // @[Conditional.scala 39:67 Icache.scala 110:25 Icache.scala 52:28]
   wire  _GEN_3602 = _T_5 ? _GEN_514 : valid_0; // @[Conditional.scala 39:67 Icache.scala 18:24]
   wire  _GEN_3603 = _T_5 ? _GEN_515 : valid_1; // @[Conditional.scala 39:67 Icache.scala 18:24]
@@ -4176,6 +4209,7 @@ module Icache(
   wire  _GEN_4376 = _T_3 ? _GEN_2827 : _GEN_3599; // @[Conditional.scala 39:67]
   wire  _GEN_4377 = _T_3 ? _GEN_2828 : _GEN_3601; // @[Conditional.scala 39:67]
   wire [127:0] _GEN_4378 = _T_3 ? _GEN_2829 : cache_wdata; // @[Conditional.scala 39:67 Icache.scala 53:28]
+  wire  _GEN_4379 = _T_3 ? inst_ready : _GEN_3600; // @[Conditional.scala 39:67 Icache.scala 42:28]
   wire  _GEN_4380 = _T_3 ? valid_0 : _GEN_3602; // @[Conditional.scala 39:67 Icache.scala 18:24]
   wire  _GEN_4381 = _T_3 ? valid_1 : _GEN_3603; // @[Conditional.scala 39:67 Icache.scala 18:24]
   wire  _GEN_4382 = _T_3 ? valid_2 : _GEN_3604; // @[Conditional.scala 39:67 Icache.scala 18:24]
@@ -4700,6 +4734,7 @@ module Icache(
     .A(req_A),
     .D(req_D)
   );
+  assign io_imem_inst_ready = inst_ready; // @[Icache.scala 123:19]
   assign io_imem_inst_read = 2'h3 == req_offset[3:2] ? cache_data_out[127:96] : _inst_read_T_8; // @[Mux.scala 80:57]
   assign io_out_inst_valid = _T ? 1'h0 : _GEN_6695; // @[Conditional.scala 40:58]
   assign io_out_inst_addr = _T ? 32'h0 : _GEN_6697; // @[Conditional.scala 40:58]
@@ -10352,6 +10387,17 @@ module Icache(
     end else begin
       state <= _GEN_4371;
     end
+    if (reset) begin // @[Icache.scala 42:28]
+      inst_ready <= 1'h0; // @[Icache.scala 42:28]
+    end else if (_T) begin // @[Conditional.scala 40:58]
+      inst_ready <= 1'h0; // @[Icache.scala 57:18]
+    end else if (!(_T_1)) begin // @[Conditional.scala 39:67]
+      if (_T_2) begin // @[Conditional.scala 39:67]
+        inst_ready <= _GEN_2050;
+      end else begin
+        inst_ready <= _GEN_4379;
+      end
+    end
     if (reset) begin // @[Icache.scala 51:28]
       cache_fill <= 1'h0; // @[Icache.scala 51:28]
     end else if (!(_T)) begin // @[Conditional.scala 40:58]
@@ -11443,11 +11489,13 @@ initial begin
   _RAND_512 = {1{`RANDOM}};
   state = _RAND_512[2:0];
   _RAND_513 = {1{`RANDOM}};
-  cache_fill = _RAND_513[0:0];
+  inst_ready = _RAND_513[0:0];
   _RAND_514 = {1{`RANDOM}};
-  cache_wen = _RAND_514[0:0];
-  _RAND_515 = {4{`RANDOM}};
-  cache_wdata = _RAND_515[127:0];
+  cache_fill = _RAND_514[0:0];
+  _RAND_515 = {1{`RANDOM}};
+  cache_wen = _RAND_515[0:0];
+  _RAND_516 = {4{`RANDOM}};
+  cache_wdata = _RAND_516[127:0];
 `endif // RANDOMIZE_REG_INIT
   `endif // RANDOMIZE
 end // initial
@@ -33805,6 +33853,7 @@ module SimTop(
 );
   wire  core_clock; // @[SimTop.scala 15:20]
   wire  core_reset; // @[SimTop.scala 15:20]
+  wire  core_io_imem_inst_ready; // @[SimTop.scala 15:20]
   wire [31:0] core_io_imem_inst_addr; // @[SimTop.scala 15:20]
   wire [31:0] core_io_imem_inst_read; // @[SimTop.scala 15:20]
   wire  core_io_dmem_data_valid; // @[SimTop.scala 15:20]
@@ -33815,6 +33864,7 @@ module SimTop(
   wire [63:0] core_io_dmem_data_write; // @[SimTop.scala 15:20]
   wire  icache_clock; // @[SimTop.scala 16:22]
   wire  icache_reset; // @[SimTop.scala 16:22]
+  wire  icache_io_imem_inst_ready; // @[SimTop.scala 16:22]
   wire [31:0] icache_io_imem_inst_addr; // @[SimTop.scala 16:22]
   wire [31:0] icache_io_imem_inst_read; // @[SimTop.scala 16:22]
   wire  icache_io_out_inst_valid; // @[SimTop.scala 16:22]
@@ -33869,6 +33919,7 @@ module SimTop(
   Core core ( // @[SimTop.scala 15:20]
     .clock(core_clock),
     .reset(core_reset),
+    .io_imem_inst_ready(core_io_imem_inst_ready),
     .io_imem_inst_addr(core_io_imem_inst_addr),
     .io_imem_inst_read(core_io_imem_inst_read),
     .io_dmem_data_valid(core_io_dmem_data_valid),
@@ -33881,6 +33932,7 @@ module SimTop(
   Icache icache ( // @[SimTop.scala 16:22]
     .clock(icache_clock),
     .reset(icache_reset),
+    .io_imem_inst_ready(icache_io_imem_inst_ready),
     .io_imem_inst_addr(icache_io_imem_inst_addr),
     .io_imem_inst_read(icache_io_imem_inst_read),
     .io_out_inst_valid(icache_io_out_inst_valid),
@@ -33970,6 +34022,7 @@ module SimTop(
   assign io_memAXI_0_r_ready = 1'h1; // @[SimTop.scala 37:18]
   assign core_clock = clock;
   assign core_reset = reset;
+  assign core_io_imem_inst_ready = icache_io_imem_inst_ready; // @[SimTop.scala 21:17]
   assign core_io_imem_inst_read = icache_io_imem_inst_read; // @[SimTop.scala 21:17]
   assign icache_clock = clock;
   assign icache_reset = reset;
