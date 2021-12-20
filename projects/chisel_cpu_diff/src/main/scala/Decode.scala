@@ -13,8 +13,6 @@ class Decode extends Module {
     val in  = Input(new BUS_R)
     val out = Output(new BUS_R)
 
-    val rs2_value = Output(UInt(64.W))
-
     val time_int  = Input(Bool())
 
     // val EX_wdest = Input(UInt(5.W))
@@ -223,11 +221,10 @@ class Decode extends Module {
   io.out.op1      := id_op1
   io.out.op2      := id_op2
   io.out.typew    := id_typew
+  io.out.wmem     := rs2_value
   io.out.opcode   := id_opcode
   io.out.aluop    := id_aluop
   io.out.loadop   := id_loadop
   io.out.storeop  := id_storeop
   io.out.sysop    := id_sysop
-
-  io.rs2_value    := rs2_value
 }

@@ -12,6 +12,7 @@ class BUS_R extends Bundle {
   val op1    = UInt(64.W)
   val op2    = UInt(64.W)
   val typew  = Bool()
+  val wmem   = UInt(64.W)
 
   val opcode   = UInt(TYPE_X.length.W)
   val aluop    = UInt(ALU_X.length.W)

@@ -57,6 +57,7 @@ class InstFetch extends Module {
   io.out.op1      := 0.U
   io.out.op2      := 0.U
   io.out.typew    := false.B
+  io.out.wmem     := 0.U
   io.out.opcode   := 0.U
   io.out.aluop    := 0.U
   io.out.loadop   := 0.U

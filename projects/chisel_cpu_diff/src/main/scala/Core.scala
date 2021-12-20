@@ -13,19 +13,29 @@ class Core extends Module {
   io.br_stall := false.B
 
   val fetch = Module(new InstFetch)
+  val reg_if_id = Module(new PipelineReg)
   val decode = Module(new Decode)
+  val reg_id_ex = Module(new PipelineReg)
   val execution = Module(new Execution)
+  val reg_ex_wb = Module(new PipelineReg)
   val writeback = Module(new WriteBack)
   val rf = Module(new RegFile)
   //val csr = Module(new Csr)
   //val clint = Module(new Clint)
 
+  // val flush = execution.io.jmp_packet.mis
+  // val stall = execution.io.busy
+  val flush = false.B
   val stall = false.B
 
   fetch.io.imem           <> io.imem
   fetch.io.stall          := stall
 
-  decode.io.in            := fetch.io.out 
+  reg_if_id.io.in         <> fetch.io.out
+  reg_if_id.io.stall      := stall
+  reg_if_id.io.flush      := flush
+
+  decode.io.in            <> reg_if_id.io.out
   decode.io.rs1_data      := rf.io.rs1_data
   decode.io.rs2_data      := rf.io.rs2_data
   decode.io.time_int      := false.B
@@ -35,11 +45,18 @@ class Core extends Module {
   // decode.io.WB_result       := writeback.io.WB_result
   // decode.io.time_int        := clint.io.time_int
 
-  execution.io.dmem       <> io.dmem
-  execution.io.in         := decode.io.out 
-  execution.io.rs2_value  := decode.io.rs2_value
+  reg_id_ex.io.in         <> decode.io.out
+  reg_id_ex.io.stall      := stall
+  reg_id_ex.io.flush      := flush
 
-  writeback.io.in         := execution.io.out
+  execution.io.dmem       <> io.dmem
+  execution.io.in         := reg_id_ex.io.out
+
+  reg_ex_wb.io.in         <> execution.io.out
+  reg_ex_wb.io.stall      := stall
+  reg_ex_wb.io.flush      := flush
+
+  writeback.io.in         := reg_ex_wb.io.out
 
   rf.io.rs1_addr          := decode.io.rs1_addr
   rf.io.rs2_addr          := decode.io.rs2_addr

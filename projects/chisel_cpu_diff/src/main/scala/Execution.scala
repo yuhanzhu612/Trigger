@@ -7,8 +7,6 @@ class Execution extends Module {
   val io = IO(new Bundle {
     val in  = Input(new BUS_R)
     val out = Output(new BUS_R)
-
-    val rs2_value = Input(UInt(64.W))
     
     val dmem  = new CoreData
 
@@ -26,7 +24,6 @@ class Execution extends Module {
   val ex_inst     = io.in.inst
   val ex_wen      = io.in.wen 
   val ex_wdest    = io.in.wdest
-  val ex_wdata    = io.in.wdata
   val ex_op1      = io.in.op1
   val ex_op2      = io.in.op2
   val ex_typew    = io.in.typew
@@ -36,7 +33,7 @@ class Execution extends Module {
   val ex_storeop  = io.in.storeop
   val ex_sysop    = io.in.sysop
 
-  val rs2_value   = io.rs2_value
+  val rs2_value   = io.in.wmem
 
   //io.skip     := ex_skip || cmp_ren || cmp_wen
 
@@ -157,6 +154,8 @@ class Execution extends Module {
                     (Fill( 8, ex_inst === SH) & data_strb_sh) |  
                     (Fill( 8, ex_inst === SB) & data_strb_sb)
 
+  val ex_wdata    = Mux(load_en, mem_wdata, Mux(ex_sysop =/= 0.U, cmp_rdata, alu_result))
+
 
   io.dmem.data_valid  := data_valid
   io.dmem.data_req    := data_req
@@ -174,6 +173,7 @@ class Execution extends Module {
   io.out.op1      := ex_op1
   io.out.op2      := ex_op2
   io.out.typew    := ex_typew
+  io.out.wmem     := rs2_value
   io.out.opcode   := ex_opcode
   io.out.aluop    := ex_aluop
   io.out.loadop   := ex_loadop
