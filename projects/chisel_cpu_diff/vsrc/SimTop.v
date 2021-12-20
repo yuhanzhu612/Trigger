@@ -13,48 +13,45 @@ module InstFetch(
   reg [31:0] _RAND_1;
   reg [31:0] _RAND_2;
 `endif // RANDOMIZE_REG_INIT
-  reg [31:0] if_pc; // @[InstFetch.scala 13:22]
-  reg [31:0] if_inst; // @[InstFetch.scala 14:24]
-  wire [31:0] bp_pred_pc = if_pc + 32'h4; // @[InstFetch.scala 17:26]
-  reg [2:0] state; // @[InstFetch.scala 27:22]
-  wire  _T_1 = state == 3'h1; // @[InstFetch.scala 31:22]
-  wire  _T_2 = state == 3'h2; // @[InstFetch.scala 31:42]
-  wire [31:0] _GEN_0 = io_imem_inst_ready ? bp_pred_pc : if_pc; // @[InstFetch.scala 34:31 InstFetch.scala 35:15 InstFetch.scala 13:22]
-  wire [31:0] _GEN_1 = io_imem_inst_ready ? io_imem_inst_read : if_inst; // @[InstFetch.scala 34:31 InstFetch.scala 36:15 InstFetch.scala 14:24]
-  wire [2:0] _GEN_2 = io_imem_inst_ready ? 3'h2 : state; // @[InstFetch.scala 34:31 InstFetch.scala 37:15 InstFetch.scala 27:22]
-  assign io_imem_inst_valid = _T_2 | _T_1; // @[InstFetch.scala 43:44]
-  assign io_imem_inst_addr = if_pc; // @[InstFetch.scala 45:22]
-  assign io_out_pc = if_pc; // @[InstFetch.scala 48:19]
-  assign io_out_inst = if_inst; // @[InstFetch.scala 49:19]
+  reg [31:0] pc; // @[InstFetch.scala 14:19]
+  reg [31:0] inst; // @[InstFetch.scala 15:21]
+  wire [31:0] bp_pred_pc = pc + 32'h4; // @[InstFetch.scala 18:23]
+  reg [2:0] state; // @[InstFetch.scala 28:22]
+  wire  _T_1 = state == 3'h1; // @[InstFetch.scala 32:22]
+  wire  _T_2 = state == 3'h2; // @[InstFetch.scala 32:42]
+  wire [31:0] _GEN_0 = io_imem_inst_ready ? io_imem_inst_read : inst; // @[InstFetch.scala 36:31 InstFetch.scala 37:12 InstFetch.scala 15:21]
+  wire [2:0] _GEN_1 = io_imem_inst_ready ? 3'h2 : state; // @[InstFetch.scala 36:31 InstFetch.scala 38:15 InstFetch.scala 28:22]
+  assign io_imem_inst_valid = _T_2 | _T_1; // @[InstFetch.scala 47:44]
+  assign io_imem_inst_addr = pc; // @[InstFetch.scala 49:22]
+  assign io_out_pc = _T_2 ? pc : 32'h0; // @[InstFetch.scala 44:20]
+  assign io_out_inst = _T_2 ? inst : 32'h0; // @[InstFetch.scala 45:20]
   always @(posedge clock) begin
-    if (reset) begin // @[InstFetch.scala 13:22]
-      if_pc <= 32'h80000000; // @[InstFetch.scala 13:22]
-    end else if (!(state == 3'h0)) begin // @[InstFetch.scala 29:28]
-      if (!(state == 3'h1 | state == 3'h2)) begin // @[InstFetch.scala 31:54]
-        if (state == 3'h3) begin // @[InstFetch.scala 33:34]
-          if_pc <= _GEN_0;
+    if (reset) begin // @[InstFetch.scala 14:19]
+      pc <= 32'h80000000; // @[InstFetch.scala 14:19]
+    end else if (!(state == 3'h0)) begin // @[InstFetch.scala 30:28]
+      if (state == 3'h1 | state == 3'h2) begin // @[InstFetch.scala 32:54]
+        pc <= bp_pred_pc; // @[InstFetch.scala 33:8]
+      end
+    end
+    if (reset) begin // @[InstFetch.scala 15:21]
+      inst <= 32'h0; // @[InstFetch.scala 15:21]
+    end else if (!(state == 3'h0)) begin // @[InstFetch.scala 30:28]
+      if (!(state == 3'h1 | state == 3'h2)) begin // @[InstFetch.scala 32:54]
+        if (state == 3'h3) begin // @[InstFetch.scala 35:34]
+          inst <= _GEN_0;
         end
       end
     end
-    if (reset) begin // @[InstFetch.scala 14:24]
-      if_inst <= 32'h0; // @[InstFetch.scala 14:24]
-    end else if (!(state == 3'h0)) begin // @[InstFetch.scala 29:28]
-      if (!(state == 3'h1 | state == 3'h2)) begin // @[InstFetch.scala 31:54]
-        if (state == 3'h3) begin // @[InstFetch.scala 33:34]
-          if_inst <= _GEN_1;
-        end
-      end
-    end
-    if (reset) begin // @[InstFetch.scala 27:22]
-      state <= 3'h0; // @[InstFetch.scala 27:22]
-    end else if (state == 3'h0) begin // @[InstFetch.scala 29:28]
-      state <= 3'h1; // @[InstFetch.scala 30:11]
-    end else if (state == 3'h1 | state == 3'h2) begin // @[InstFetch.scala 31:54]
-      state <= 3'h3; // @[InstFetch.scala 32:11]
-    end else if (state == 3'h3) begin // @[InstFetch.scala 33:34]
-      state <= _GEN_2;
+    if (reset) begin // @[InstFetch.scala 28:22]
+      state <= 3'h0; // @[InstFetch.scala 28:22]
+    end else if (state == 3'h0) begin // @[InstFetch.scala 30:28]
+      state <= 3'h1; // @[InstFetch.scala 31:11]
+    end else if (state == 3'h1 | state == 3'h2) begin // @[InstFetch.scala 32:54]
+      state <= 3'h3; // @[InstFetch.scala 34:11]
+    end else if (state == 3'h3) begin // @[InstFetch.scala 35:34]
+      state <= _GEN_1;
     end else begin
-      state <= 3'h2; // @[InstFetch.scala 40:11]
+      state <= 3'h2; // @[InstFetch.scala 41:11]
     end
   end
 // Register and memory initialization
@@ -94,9 +91,9 @@ initial begin
     `endif
 `ifdef RANDOMIZE_REG_INIT
   _RAND_0 = {1{`RANDOM}};
-  if_pc = _RAND_0[31:0];
+  pc = _RAND_0[31:0];
   _RAND_1 = {1{`RANDOM}};
-  if_inst = _RAND_1[31:0];
+  inst = _RAND_1[31:0];
   _RAND_2 = {1{`RANDOM}};
   state = _RAND_2[2:0];
 `endif // RANDOMIZE_REG_INIT

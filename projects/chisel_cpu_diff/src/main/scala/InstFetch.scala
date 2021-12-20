@@ -10,11 +10,12 @@ class InstFetch extends Module {
     val out  = Output(new BUS_R)
   })
 
-  val if_pc = RegInit("h80000000".U(32.W))
-  val if_inst = RegInit(0.U(32.W))
+  val pc_init = "h80000000".U(32.W)
+  val pc = RegInit(pc_init)
+  val inst = RegInit(0.U(32.W))
 
   // val bp = Module(new BrPredictor)
-  val bp_pred_pc = if_pc + 4.U
+  val bp_pred_pc = pc + 4.U
   // bp.io.pc := if_pc
   // bp.io.inst := if_inst
   // bp.io.is_br := (inst === Instructions.JAL) || (inst === Instructions.JALR) ||
@@ -29,20 +30,23 @@ class InstFetch extends Module {
   when (state === s_reset) {
     state := s_init
   } .elsewhen (state === s_init || state === s_idle) {
+    pc := bp_pred_pc
     state := s_wait
   } .elsewhen (state === s_wait) {
     when (io.imem.inst_ready) {
-      if_pc   := bp_pred_pc
-      if_inst := io.imem.inst_read
+      inst := io.imem.inst_read
       state   := Mux(io.stall, s_stall, s_idle)
     }
   } .otherwise {  // s_stall
     state := Mux(io.stall, s_stall, s_idle)
   }
 
+  val if_pc   = Mux(state === s_idle, pc, 0.U)
+  val if_inst = Mux(state === s_idle, inst, 0.U)
+
   io.imem.inst_valid := (state === s_idle) || (state === s_init)
   io.imem.inst_req   := false.B
-  io.imem.inst_addr  := if_pc
+  io.imem.inst_addr  := pc
   io.imem.inst_size  := SIZE_W
 
   io.out.pc       := if_pc
