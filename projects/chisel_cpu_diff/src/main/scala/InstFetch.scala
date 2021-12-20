@@ -44,7 +44,7 @@ class InstFetch extends Module {
   val if_pc   = Mux(state === s_idle, pc, 0.U)
   val if_inst = Mux(state === s_idle, inst, 0.U)
 
-  io.imem.inst_valid := (state === s_idle) || (state === s_init)
+  io.imem.inst_valid := (state === s_idle) || (state === s_init) || (state === s_wait)
   io.imem.inst_req   := false.B
   io.imem.inst_addr  := pc
   io.imem.inst_size  := SIZE_W
