@@ -10,7 +10,7 @@ class InstFetch extends Module {
     val out  = Output(new BUS_R)
   })
 
-  val pc_init = "h80000000".U(32.W)
+  val pc_init = "h7ffffffc".U(32.W)
   val pc = RegInit(pc_init)
   val inst = RegInit(0.U(32.W))
 

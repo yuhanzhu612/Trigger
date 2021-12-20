@@ -28,7 +28,7 @@ module InstFetch(
   assign io_out_inst = _T_2 ? inst : 32'h0; // @[InstFetch.scala 45:20]
   always @(posedge clock) begin
     if (reset) begin // @[InstFetch.scala 14:19]
-      pc <= 32'h80000000; // @[InstFetch.scala 14:19]
+      pc <= 32'h7ffffffc; // @[InstFetch.scala 14:19]
     end else if (!(state == 3'h0)) begin // @[InstFetch.scala 30:28]
       if (state == 3'h1 | state == 3'h2) begin // @[InstFetch.scala 32:54]
         pc <= bp_pred_pc; // @[InstFetch.scala 33:8]
