@@ -243,7 +243,7 @@ class Decode extends Module {
   io.out.wen      := id_wen
   io.out.wdest    := id_wdest
   io.out.wdata    := id_wdata
-  io.out.op1      := id_op1
+  io.out.op1      := Mux(my_inst, rs1_value, id_op1)
   io.out.op2      := id_op2
   io.out.typew    := id_typew
   io.out.wmem     := rs2_value

@@ -1,6 +1,7 @@
 import chisel3._
 import chisel3.util.experimental._
 import difftest._
+import Instructions._
 import Constant._
 
 class Core extends Module {
@@ -35,10 +36,10 @@ class Core extends Module {
   decode.io.rs1_data      := rf.io.rs1_data
   decode.io.rs2_data      := rf.io.rs2_data
   decode.io.time_int      := false.B
-  decode.io.ex_wdest        := execution.io.ex_wdest
-  decode.io.ex_result       := execution.io.ex_result
-  decode.io.wb_wdest        := writeback.io.wb_wdest
-  decode.io.wb_result       := writeback.io.wb_result
+  decode.io.ex_wdest      := execution.io.ex_wdest
+  decode.io.ex_result     := execution.io.ex_result
+  decode.io.wb_wdest      := writeback.io.wb_wdest
+  decode.io.wb_result     := writeback.io.wb_result
   // decode.io.time_int        := clint.io.time_int
 
   reg_id_ex.io.in         <> decode.io.out
@@ -77,14 +78,13 @@ class Core extends Module {
   /* ----- Difftest ------------------------------ */
 
   val valid   = writeback.io.ready_cmt
-  // val inst_my = writeback.io.ready_cmt
-  // val print   = writeback.io.ready_cmt
-  //val skip    = writeback.io.skip || (csr.io.inst(31, 20) === Csrs.mcycle && csr.io.sysop =/= 0.U)
-  val skip = false.B
+  val inst_my = writeback.io.inst === MY_INST
+  val print   = writeback.io.print
+  val skip    = inst_my || (writeback.io.inst(31, 20) === Csrs.mcycle && writeback.io.sysop =/= 0.U)
 
-  // when (valid && inst_my) {
-  //   printf("%c", print)
-  // }
+  when (valid && inst_my) {
+    printf("%c", print)
+  }
 
   // val intr = writeback.io.intr
   // val intr_no = Mux(intr, writeback.io.intr_no, 0.U)

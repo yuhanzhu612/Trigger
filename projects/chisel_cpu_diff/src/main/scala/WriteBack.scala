@@ -8,6 +8,8 @@ class WriteBack extends Module {
 
   val pc    = Output(UInt(32.W))
   val inst  = Output(UInt(32.W))
+  val print = Output(UInt(64.W))
+  val sysop = Output(Bool())
 
   val wen   = Output(Bool())
   val wdest = Output(UInt(5.W))
@@ -33,6 +35,8 @@ class WriteBack extends Module {
 
   io.pc         := wb_pc
   io.inst       := wb_inst
+  io.print      := wb_op1
+  io.sysop      := wb_sysop
 
   io.wen        := wb_wen
   io.wdest      := wb_wdest
