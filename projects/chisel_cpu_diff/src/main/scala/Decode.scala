@@ -57,18 +57,18 @@ class Decode extends Module {
   val csrrc   = inst === CSRRC
   val csrrsi  = inst === CSRRSI
   val csrrci  = inst === CSRRCI
-  val typeI   = addi  || andi   || xori   || ori   || slli  || srli  ||
-                srai  || slti   || sltiu  || addiw || slliw || srliw ||
-                sraiw || jalr   || lb     || lh    || lw    || ld    || 
-                lbu   || lhu    || lwu    || csrrw || csrrs || ecall || 
-                csrrc || csrrsi || csrrci
+  val typeI   = addi   || andi   || xori   || ori   || slli  || srli  ||
+                srai   || slti   || sltiu  || addiw || slliw || srliw ||
+                sraiw  || lb     || lh     || lw    || ld    || lbu   || 
+                lhu    || lwu    || csrrw  || csrrs || ecall || csrrc || 
+                csrrsi || csrrci
   //U-TYPE 2
   val auipc   = inst === AUIPC
   val lui     = inst === LUI
   val typeU  = auipc || lui
   //J-TYPE 1
   val jal     = inst === JAL
-  val typeJ   = jal
+  val typeJ   = jal || jalr
   //R-TYPE 16
   val add     = inst === ADD
   val sub     = inst === SUB
@@ -231,7 +231,7 @@ class Decode extends Module {
 
   val mis_predict = Mux(br_taken, (id_bp_taken && (br_target =/= id_bp_targer)) || !id_bp_taken, id_bp_taken)
 
-  io.jmp_packet.valid   := jalr || typeJ || typeB || ecall || mret
+  io.jmp_packet.valid   := typeJ || typeB || ecall || mret
   io.jmp_packet.inst_pc := id_pc
   io.jmp_packet.jmp     := br_taken
   io.jmp_packet.jmp_pc  := br_target
