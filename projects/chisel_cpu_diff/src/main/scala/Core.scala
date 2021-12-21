@@ -23,12 +23,12 @@ class Core extends Module {
   //val csr = Module(new Csr)
   //val clint = Module(new Clint)
 
-  // val flush = execution.io.jmp_packet.mis
+  val flush = decode.io.jmp_packet.mis
   // val stall = execution.io.busy
-  val flush = false.B
-  val stall = false.B
+  val stall = execution.io.busy
 
   fetch.io.imem           <> io.imem
+  fetch.io.jmp_packet     <> decode.io.jmp_packet
   fetch.io.stall          := stall
 
   reg_if_id.io.in         <> fetch.io.out
@@ -47,14 +47,14 @@ class Core extends Module {
 
   reg_id_ex.io.in         <> decode.io.out
   reg_id_ex.io.stall      := stall
-  reg_id_ex.io.flush      := flush
+  reg_id_ex.io.flush      := false.B
 
   execution.io.dmem       <> io.dmem
   execution.io.in         := reg_id_ex.io.out
 
   reg_ex_wb.io.in         <> execution.io.out
   reg_ex_wb.io.stall      := stall
-  reg_ex_wb.io.flush      := flush
+  reg_ex_wb.io.flush      := false.B
 
   writeback.io.in         := reg_ex_wb.io.out
 

@@ -13,6 +13,8 @@ class Decode extends Module {
     val in  = Input(new BUS_R)
     val out = Output(new BUS_R)
 
+    val jmp_packet = Output(new JmpPacket)
+
     val time_int  = Input(Bool())
 
     // val EX_wdest = Input(UInt(5.W))
@@ -209,8 +211,36 @@ class Decode extends Module {
   val id_typew  = addiw || slliw || srliw || sraiw || addw ||
                   subw  || sllw  || srlw  || sraw
 
+  val id_bp_taken   = io.in.bp_taken
+  val id_bp_targer  = io.in.bp_targer   
+
+  val br_taken  = (jal  && true.B) | 
+                  (jalr && true.B) |  
+                  (beq  && rs1_value === rs2_value) |  
+                  (bne  && rs1_value =/= rs2_value) |
+                  (blt  && rs1_value.asSInt() <  rs2_value.asSInt()) |
+                  (bge  && rs1_value.asSInt() >= rs2_value.asSInt()) |
+                  (bltu && rs1_value.asUInt() <  rs2_value.asUInt()) |
+                  (bgeu && rs1_value.asUInt() >= rs2_value.asUInt())       
+  val br_target = (Fill(32, jal ) & id_pc     + imm_j) | 
+                  (Fill(32, jalr) & rs1_value + imm_i) |  
+                  (Fill(32, beq ) & id_pc     + imm_b) |  
+                  (Fill(32, bne ) & id_pc     + imm_b) |
+                  (Fill(32, blt ) & id_pc     + imm_b) |
+                  (Fill(32, bge ) & id_pc     + imm_b) |
+                  (Fill(32, bltu) & id_pc     + imm_b) |
+                  (Fill(32, bgeu) & id_pc     + imm_b)                          
+
   io.rs1_addr     := rs1_addr
   io.rs2_addr     := rs2_addr
+
+  val mis_predict = Mux(br_taken, (id_bp_taken && (br_target =/= id_bp_targer)) || !id_bp_taken, id_bp_taken)
+
+  io.jmp_packet.valid   := jalr || typeJ || typeB || ecall || mret
+  io.jmp_packet.inst_pc := id_pc
+  io.jmp_packet.jmp     := br_taken
+  io.jmp_packet.jmp_pc  := br_target
+  io.jmp_packet.mis     := io.jmp_packet.valid && mis_predict
 
   //Next
   io.out.pc       := id_pc
@@ -227,4 +257,6 @@ class Decode extends Module {
   io.out.loadop   := id_loadop
   io.out.storeop  := id_storeop
   io.out.sysop    := id_sysop
+  io.out.bp_taken   := 0.U
+  io.out.bp_targer  := 0.U
 }

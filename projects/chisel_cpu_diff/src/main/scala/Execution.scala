@@ -5,8 +5,9 @@ import Constant._
 
 class Execution extends Module {
   val io = IO(new Bundle {
-    val in  = Input(new BUS_R)
-    val out = Output(new BUS_R)
+    val in    = Input(new BUS_R)
+    val out   = Output(new BUS_R)
+    val busy  = Output(Bool())
     
     val dmem  = new CoreData
 
@@ -20,6 +21,9 @@ class Execution extends Module {
     // val EX_result = Output(UInt(64.W))
 
   })
+
+  val reg_busR  = RegInit(0.U.asTypeOf(new BUS_R))
+
   val ex_pc       = io.in.pc
   val ex_inst     = io.in.inst
   val ex_wen      = io.in.wen 
@@ -27,13 +31,12 @@ class Execution extends Module {
   val ex_op1      = io.in.op1
   val ex_op2      = io.in.op2
   val ex_typew    = io.in.typew
+  val ex_wmem     = io.in.wmem
   val ex_opcode   = io.in.opcode
   val ex_aluop    = io.in.aluop
   val ex_loadop   = io.in.loadop
   val ex_storeop  = io.in.storeop
   val ex_sysop    = io.in.sysop
-
-  val rs2_value   = io.in.wmem
 
   //io.skip     := ex_skip || cmp_ren || cmp_wen
 
@@ -97,14 +100,14 @@ class Execution extends Module {
 
   //Access memory
   val data_write_sb = MuxLookup(alu_result(2,0), 0.U, Array(
-    "b000".U -> Cat(Fill(56, 0.U), rs2_value(7,0)               ),
-    "b001".U -> Cat(Fill(48, 0.U), rs2_value(7,0), Fill( 8, 0.U)),
-    "b010".U -> Cat(Fill(40, 0.U), rs2_value(7,0), Fill(16, 0.U)),
-    "b011".U -> Cat(Fill(32, 0.U), rs2_value(7,0), Fill(24, 0.U)),
-    "b100".U -> Cat(Fill(24, 0.U), rs2_value(7,0), Fill(32, 0.U)),
-    "b101".U -> Cat(Fill(16, 0.U), rs2_value(7,0), Fill(40, 0.U)),
-    "b110".U -> Cat(Fill( 8, 0.U), rs2_value(7,0), Fill(48, 0.U)),
-    "b111".U -> Cat(               rs2_value(7,0), Fill(56, 0.U)),
+    "b000".U -> Cat(Fill(56, 0.U), ex_wmem(7,0)               ),
+    "b001".U -> Cat(Fill(48, 0.U), ex_wmem(7,0), Fill( 8, 0.U)),
+    "b010".U -> Cat(Fill(40, 0.U), ex_wmem(7,0), Fill(16, 0.U)),
+    "b011".U -> Cat(Fill(32, 0.U), ex_wmem(7,0), Fill(24, 0.U)),
+    "b100".U -> Cat(Fill(24, 0.U), ex_wmem(7,0), Fill(32, 0.U)),
+    "b101".U -> Cat(Fill(16, 0.U), ex_wmem(7,0), Fill(40, 0.U)),
+    "b110".U -> Cat(Fill( 8, 0.U), ex_wmem(7,0), Fill(48, 0.U)),
+    "b111".U -> Cat(               ex_wmem(7,0), Fill(56, 0.U)),
   ))
   val data_strb_sb = MuxLookup(alu_result(2,0), 0.U, Array(
     "b000".U -> "b0000_0001".U,
@@ -118,10 +121,10 @@ class Execution extends Module {
   ))
 
   val data_write_sh = MuxLookup(alu_result(2,1), 0.U, Array(
-    "b00".U -> Cat(Fill(48, 0.U), rs2_value(15,0)               ),
-    "b01".U -> Cat(Fill(32, 0.U), rs2_value(15,0), Fill(16, 0.U)),
-    "b10".U -> Cat(Fill(16, 0.U), rs2_value(15,0), Fill(32, 0.U)),
-    "b11".U -> Cat(               rs2_value(15,0), Fill(48, 0.U)),
+    "b00".U -> Cat(Fill(48, 0.U), ex_wmem(15,0)               ),
+    "b01".U -> Cat(Fill(32, 0.U), ex_wmem(15,0), Fill(16, 0.U)),
+    "b10".U -> Cat(Fill(16, 0.U), ex_wmem(15,0), Fill(32, 0.U)),
+    "b11".U -> Cat(               ex_wmem(15,0), Fill(48, 0.U)),
   ))
   val data_strb_sh = MuxLookup(alu_result(2,1), 0.U, Array(
     "b00".U -> "b0000_0011".U,
@@ -131,15 +134,15 @@ class Execution extends Module {
   ))
 
   val data_write_sw = MuxLookup(alu_result(2), 0.U, Array(
-    "b0".U -> Cat(Fill(32, 0.U), rs2_value(32,0)),
-    "b1".U -> Cat(rs2_value(32,0), Fill(32, 0.U)),
+    "b0".U -> Cat(Fill(32, 0.U), ex_wmem(32,0)),
+    "b1".U -> Cat(ex_wmem(32,0), Fill(32, 0.U)),
   ))
   val data_strb_sw = MuxLookup(alu_result(2), 0.U, Array(
     "b0".U -> "b0000_1111".U,
     "b1".U -> "b1111_0000".U,
   ))
   val data_strb_sd  = "b1111_1111".U
-  val data_write_sd = rs2_value
+  val data_write_sd = ex_wmem
   
   val data_write  = (Fill(64, ex_inst === SD) & data_write_sd) | 
                     (Fill(64, ex_inst === SW) & data_write_sw) |  
@@ -156,29 +159,83 @@ class Execution extends Module {
 
   val ex_wdata    = Mux(load_en, mem_wdata, Mux(ex_sysop =/= 0.U, cmp_rdata, alu_result))
 
+  val reg_valid = RegInit(false.B)
+  val reg_req   = RegInit(false.B)
+  val reg_addr  = RegInit(0.U(64.W))
+  val reg_write = RegInit(0.U(64.W))
+  val reg_size  = RegInit(0.U(2.W))
+  val reg_strb  = RegInit(0.U(8.W))
 
-  io.dmem.data_valid  := data_valid
-  io.dmem.data_req    := data_req
-  io.dmem.data_addr   := data_addr
-  io.dmem.data_write  := data_write
-  io.dmem.data_size   := data_size
-  io.dmem.data_strb   := data_strb
+  val is_mem    = load_en || store_en
+  val load_data = RegInit(UInt(64.W), 0.U)
+  val resp_success = io.dmem.data_ready
+
+  val s_idle :: s_wait :: s_complete :: Nil = Enum(3)
+  val state = RegInit(s_idle)
+  switch (state) {
+    is (s_idle) {
+      when (is_mem) {
+        state     := s_wait
+        reg_busR  := io.in
+        reg_valid := data_valid
+        reg_req   := data_req
+        reg_addr  := data_addr
+        reg_write := data_write
+        reg_size  := data_size
+        reg_strb  := data_strb
+      }
+    }
+    is (s_wait) {
+      when (resp_success) {
+        load_data := io.dmem.data_read
+        state := s_complete
+        // printf("[LD] pc=%x addr=%x rdata=%x -> %x\n", uop.pc, reg_addr, resp.bits.rdata, load_data)
+      }
+    }
+    is (s_complete) {
+      state := s_idle
+      reg_busR := 0.U.asTypeOf(new BUS_R)
+      reg_valid := false.B
+      reg_req   := false.B
+      reg_addr  := 0.U
+      reg_write := 0.U
+      reg_size  := 0.U
+      reg_strb  := 0.U
+    }
+  }
+
+  io.dmem.data_valid  := reg_valid
+  io.dmem.data_req    := reg_req
+  io.dmem.data_addr   := reg_addr
+  io.dmem.data_write  := reg_write
+  io.dmem.data_size   := reg_size
+  io.dmem.data_strb   := reg_strb
+
+  val busy = ((state === s_idle) && is_mem) || (state === s_wait)
+
+  io.busy := busy
 
   //Next
-  io.out.pc       := ex_pc
-  io.out.inst     := ex_inst
-  io.out.wen      := ex_wen
-  io.out.wdest    := ex_wdest
-  io.out.wdata    := ex_wdata
-  io.out.op1      := ex_op1
-  io.out.op2      := ex_op2
-  io.out.typew    := ex_typew
-  io.out.wmem     := rs2_value
-  io.out.opcode   := ex_opcode
-  io.out.aluop    := ex_aluop
-  io.out.loadop   := ex_loadop
-  io.out.storeop  := ex_storeop
-  io.out.sysop    := ex_sysop
+  when (busy) {
+    io.out := reg_busR
+  }.otherwise {
+    io.out.pc       := ex_pc
+    io.out.inst     := ex_inst
+    io.out.wen      := ex_wen
+    io.out.wdest    := ex_wdest
+    io.out.wdata    := ex_wdata
+    io.out.op1      := ex_op1
+    io.out.op2      := ex_op2
+    io.out.typew    := ex_typew
+    io.out.wmem     := ex_wmem
+    io.out.opcode   := ex_opcode
+    io.out.aluop    := ex_aluop
+    io.out.loadop   := ex_loadop
+    io.out.storeop  := ex_storeop
+    io.out.sysop    := ex_sysop
+    io.out.bp_taken   := 0.U
+    io.out.bp_targer  := 0.U
+  }
 
   //io.EX_wdest  := Mux(ex_valid, ex_wdest, 0.U)
   //io.EX_result := io.ex.wdata
