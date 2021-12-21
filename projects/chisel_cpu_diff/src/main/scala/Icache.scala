@@ -6,7 +6,6 @@ class Icache extends Module {
   val io = IO(new Bundle {
       val imem = Flipped(new CoreInst)
       val out  = new AxiInst
-      val br_stall    = Input(Bool())
   })
 
   val in  = io.imem
@@ -22,7 +21,7 @@ class Icache extends Module {
   val req_index  = Wire(UInt(8.W))
   val req_offset = Wire(UInt(4.W))
 
-  val idle :: stall :: ask :: fill :: fill_wait :: Nil = Enum(5)
+  val idle :: ask :: fill :: fill_wait :: Nil = Enum(4)
   val state = RegInit(idle)
 
   req_tag     := in.inst_addr(31,12)
@@ -56,24 +55,12 @@ class Icache extends Module {
     is (idle) {
       inst_ready := false.B
       when (in.inst_valid) {
-        state := stall
-      }
-    }
-
-    is (stall) {
-      when (in.inst_valid) {
         state := ask
-      }
-      .otherwise {
-        state := idle
       }
     }
 
     is (ask) {
-      when (io.br_stall) {
-        state := idle
-      }
-      .elsewhen (cache_hit) {
+      when (cache_hit) {
         valid(req_index)  := true.B
         tag(req_index)    := req_tag
         offset(req_index) := req_offset

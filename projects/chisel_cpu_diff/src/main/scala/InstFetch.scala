@@ -73,8 +73,8 @@ class InstFetch extends Module {
                  (inst === Instructions.BGE) || (inst === Instructions.BGEU);
   bp.io.jmp_packet <> io.jmp_packet
 
-  val if_pc   = Mux(state === s_idle && !stall, pc, 0.U)
-  val if_inst = Mux(state === s_idle && !stall, inst, 0.U)
+  val if_pc   = Mux(state === s_idle, pc, 0.U)
+  val if_inst = Mux(state === s_idle, inst, 0.U)
 
   io.out.pc         := if_pc
   io.out.inst       := if_inst

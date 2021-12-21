@@ -17,10 +17,10 @@ class Decode extends Module {
 
     val time_int  = Input(Bool())
 
-    // val EX_wdest = Input(UInt(5.W))
-    // val WB_wdest = Input(UInt(5.W))
-    // val EX_result = Input(UInt(64.W))
-    // val WB_result = Input(UInt(64.W))
+    val ex_wdest  = Input(UInt(5.W))
+    val wb_wdest  = Input(UInt(5.W))
+    val ex_result = Input(UInt(64.W))
+    val wb_result = Input(UInt(64.W))
 
   })
 
@@ -136,15 +136,10 @@ class Decode extends Module {
   val rs1_data  = io.rs1_data
   val rs2_data  = io.rs2_data
 
-  // val ex_wdest    = io.ex_wdest
-  // val ex_result   = io.ex_result
-  // val wb_wdest    = io.wb_wdest
-  // val wb_result   = io.wb_result
-
-  val ex_wdest    = 0.U
-  val ex_result   = 0.U
-  val wb_wdest    = 0.U
-  val wb_result   = 0.U
+  val ex_wdest    = io.ex_wdest
+  val ex_result   = io.ex_result
+  val wb_wdest    = io.wb_wdest
+  val wb_result   = io.wb_result
 
   val t_int       = io.time_int
   

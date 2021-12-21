@@ -7,10 +7,7 @@ class Core extends Module {
   val io = IO(new Bundle {
     val imem = new CoreInst
     val dmem = new CoreData
-    val br_stall = Output(Bool())
   })
-
-  io.br_stall := false.B
 
   val fetch = Module(new InstFetch)
   val reg_if_id = Module(new PipelineReg)
@@ -24,7 +21,6 @@ class Core extends Module {
   //val clint = Module(new Clint)
 
   val flush = decode.io.jmp_packet.mis
-  // val stall = execution.io.busy
   val stall = execution.io.busy
 
   fetch.io.imem           <> io.imem
@@ -39,10 +35,10 @@ class Core extends Module {
   decode.io.rs1_data      := rf.io.rs1_data
   decode.io.rs2_data      := rf.io.rs2_data
   decode.io.time_int      := false.B
-  // decode.io.EX_wdest        := execution.io.EX_wdest
-  // decode.io.EX_result       := execution.io.EX_result
-  // decode.io.WB_wdest        := writeback.io.WB_wdest
-  // decode.io.WB_result       := writeback.io.WB_result
+  decode.io.ex_wdest        := execution.io.ex_wdest
+  decode.io.ex_result       := execution.io.ex_result
+  decode.io.wb_wdest        := writeback.io.wb_wdest
+  decode.io.wb_result       := writeback.io.wb_result
   // decode.io.time_int        := clint.io.time_int
 
   reg_id_ex.io.in         <> decode.io.out

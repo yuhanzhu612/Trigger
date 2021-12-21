@@ -17,8 +17,8 @@ class Execution extends Module {
     // val cmp_wdata  = Output(UInt(64.W))
     // val cmp_rdata  = Input(UInt(64.W))
 
-    // val EX_wdest  = Output(UInt(5.W))
-    // val EX_result = Output(UInt(64.W))
+    val ex_wdest  = Output(UInt(5.W))
+    val ex_result = Output(UInt(64.W))
 
   })
 
@@ -237,7 +237,7 @@ class Execution extends Module {
     io.out.bp_targer  := 0.U
   }
 
-  //io.EX_wdest  := Mux(ex_valid, ex_wdest, 0.U)
-  //io.EX_result := io.ex.wdata
+  io.ex_wdest  := io.out.wdest
+  io.ex_result := io.out.wdata
 
 }
