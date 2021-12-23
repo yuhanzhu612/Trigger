@@ -35,6 +35,7 @@ class Core extends Module {
   decode.io.in            <> reg_if_id.io.out
   decode.io.rs1_data      := rf.io.rs1_data
   decode.io.rs2_data      := rf.io.rs2_data
+  decode.io.stall         := stall
   decode.io.time_int      := false.B
   decode.io.ex_wdest      := execution.io.ex_wdest
   decode.io.ex_result     := execution.io.ex_result

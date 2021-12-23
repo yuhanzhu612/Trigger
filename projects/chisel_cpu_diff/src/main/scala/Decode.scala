@@ -13,17 +13,20 @@ class Decode extends Module {
     val in  = Input(new BUS_R)
     val out = Output(new BUS_R)
 
-    val jmp_packet = Output(new JmpPacket)
+    val jmp_packet  = Output(new JmpPacket)
 
-    val time_int  = Input(Bool())
+    val stall       = Input(Bool())
 
-    val ex_wdest  = Input(UInt(5.W))
-    val wb_wdest  = Input(UInt(5.W))
-    val ex_result = Input(UInt(64.W))
-    val wb_result = Input(UInt(64.W))
+    val time_int    = Input(Bool())
+
+    val ex_wdest    = Input(UInt(5.W))
+    val wb_wdest    = Input(UInt(5.W))
+    val ex_result   = Input(UInt(64.W))
+    val wb_result   = Input(UInt(64.W))
 
   })
 
+  val id_valid  = io.in.valid
   val id_pc     = io.in.pc
   val id_inst   = io.in.inst
   
@@ -145,9 +148,8 @@ class Decode extends Module {
   
   val rs1_forward = (rs1_addr =/= 0.U) && (rs1_addr === ex_wdest || rs1_addr === wb_wdest) && rs1_en
   val rs2_forward = (rs2_addr =/= 0.U) && (rs2_addr === ex_wdest || rs2_addr === wb_wdest) && rs2_en
-
-  val rs1_value = Mux(rs1_forward, Mux(rs1_addr === ex_wdest, ex_result, wb_result), rs1_data)
-  val rs2_value = Mux(rs2_forward, Mux(rs2_addr === ex_wdest, ex_result, wb_result), rs2_data)
+  val rs1_value   = Mux(rs1_forward, Mux(rs1_addr === ex_wdest, ex_result, wb_result), rs1_data)
+  val rs2_value   = Mux(rs2_forward, Mux(rs2_addr === ex_wdest, ex_result, wb_result), rs2_data)
 
   val id_wen    = ~(ecall || mret || my_inst || typeS || typeB)
   val id_wdest  = Mux(id_wen, inst(11, 7), 0.U)
@@ -226,10 +228,9 @@ class Decode extends Module {
                   (Fill(32, bltu) & id_pc     + imm_b) |
                   (Fill(32, bgeu) & id_pc     + imm_b)                          
 
-  io.rs1_addr     := rs1_addr
-  io.rs2_addr     := rs2_addr
+  val br_stall    = io.stall && (rs1_forward || rs2_forward) //br_target not ready
 
-  val mis_predict = Mux(br_taken, (id_bp_taken && (br_target =/= id_bp_targer)) || !id_bp_taken, id_bp_taken)
+  val mis_predict = Mux(br_taken, (id_bp_taken && (br_target =/= id_bp_targer)) || !id_bp_taken, id_bp_taken) && !br_stall
 
   io.jmp_packet.valid   := typeJ || typeB || ecall || mret
   io.jmp_packet.inst_pc := id_pc
@@ -237,13 +238,8 @@ class Decode extends Module {
   io.jmp_packet.jmp_pc  := br_target
   io.jmp_packet.mis     := io.jmp_packet.valid && mis_predict
 
-  // val id_valid  = RegInit(false.B)
-  // when (io.in.valid) {
-  //   id_valid := true.B
-  // }.otherwise {
-  //   id_valid := false.B
-  // }
-  val id_valid  = io.in.valid
+  io.rs1_addr           := rs1_addr
+  io.rs2_addr           := rs2_addr
 
   //Next
   io.out.valid      := id_valid

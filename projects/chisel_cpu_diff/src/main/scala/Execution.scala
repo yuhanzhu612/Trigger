@@ -24,14 +24,6 @@ class Execution extends Module {
 
   })
 
-  val reg_busR  = RegInit(0.U.asTypeOf(new BUS_R))
-
-  // val ex_valid  = RegInit(false.B)
-  // when (io.in.valid) {
-  //   ex_valid := true.B
-  // }.otherwise {
-  //   ex_valid := false.B
-  // }
   val ex_valid    = io.in.valid
   val ex_pc       = io.in.pc
   val ex_inst     = io.in.inst
@@ -46,8 +38,6 @@ class Execution extends Module {
   val ex_loadop   = io.in.loadop
   val ex_storeop  = io.in.storeop
   val ex_sysop    = io.in.sysop
-
-  //io.skip     := ex_skip || cmp_ren || cmp_wen
 
   //alu
   val in1 = Mux(ex_typew, Mux(ex_aluop === s"b$ALU_SRA".U, Cat(Fill(32, ex_op1(31)), ex_op1(31, 0)), Cat(Fill(32, 0.U), ex_op1(31, 0))), ex_op1)
@@ -182,7 +172,7 @@ class Execution extends Module {
   val s_idle :: s_wait :: s_complete :: Nil = Enum(3)
   val state = RegInit(s_idle)
 
-  //val busy = RegInit(false.B)
+  val reg_busR  = RegInit(0.U.asTypeOf(new BUS_R))
 
   switch (state) {
     is (s_idle) {
@@ -195,7 +185,6 @@ class Execution extends Module {
         reg_write := data_write
         reg_size  := data_size
         reg_strb  := data_strb
-        //busy      := true.B
       }
     }
     is (s_wait) {
@@ -213,7 +202,6 @@ class Execution extends Module {
       reg_write := 0.U
       reg_size  := 0.U
       reg_strb  := 0.U
-      //busy      := false.B
     }
   }
 
@@ -225,40 +213,26 @@ class Execution extends Module {
   io.dmem.data_strb   := reg_strb
 
   val busy = (((state === s_idle) && is_mem) || (state === s_wait)) && ex_valid
-
-  // val busy = RegInit(false.B)
-  // when (((state === s_idle) && is_mem) || (state === s_wait)) {
-  //   when (ex_valid) {
-  //     busy := true.B
-  //   }
-  // }.otherwise {
-  //   busy := false.B
-  // }
-
   io.busy := busy
 
   //Next
-  when (busy) {
-    io.out := reg_busR
-  }.otherwise {
-    io.out.valid    := ex_valid
-    io.out.pc       := ex_pc
-    io.out.inst     := ex_inst
-    io.out.wen      := ex_wen
-    io.out.wdest    := ex_wdest
-    io.out.wdata    := ex_wdata
-    io.out.op1      := ex_op1
-    io.out.op2      := ex_op2
-    io.out.typew    := ex_typew
-    io.out.wmem     := ex_wmem
-    io.out.opcode   := ex_opcode
-    io.out.aluop    := ex_aluop
-    io.out.loadop   := ex_loadop
-    io.out.storeop  := ex_storeop
-    io.out.sysop    := ex_sysop
-    io.out.bp_taken   := 0.U
-    io.out.bp_targer  := 0.U
-  }
+  io.out.valid    := ex_valid
+  io.out.pc       := ex_pc
+  io.out.inst     := ex_inst
+  io.out.wen      := ex_wen
+  io.out.wdest    := ex_wdest
+  io.out.wdata    := ex_wdata
+  io.out.op1      := ex_op1
+  io.out.op2      := ex_op2
+  io.out.typew    := ex_typew
+  io.out.wmem     := ex_wmem
+  io.out.opcode   := ex_opcode
+  io.out.aluop    := ex_aluop
+  io.out.loadop   := ex_loadop
+  io.out.storeop  := ex_storeop
+  io.out.sysop    := ex_sysop
+  io.out.bp_taken   := 0.U
+  io.out.bp_targer  := 0.U
 
   io.ex_wdest  := Mux(ex_valid, io.out.wdest, 0.U)
   io.ex_result := io.out.wdata

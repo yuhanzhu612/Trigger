@@ -21,8 +21,7 @@ class InstFetch extends Module {
   val bp_pred_pc = bp.io.pred_pc
 
   val mis = io.jmp_packet.mis                     // branch mis-predict
-
-  val reg_mis = RegInit(false.B)                  // store branch mis-predict status
+  val reg_mis = RegInit(false.B)
   val mis_pc  = RegInit(0.U(32.W))
   when (mis) {
     reg_mis := true.B
@@ -34,7 +33,7 @@ class InstFetch extends Module {
 
   val npc = Mux(reg_mis, mis_pc, bp_pred_pc)
 
-  io.imem.inst_valid := true.B
+  io.imem.inst_valid := !stall
   io.imem.inst_req   := false.B
   io.imem.inst_addr  := npc.asUInt()
   io.imem.inst_size  := SIZE_W
@@ -57,13 +56,11 @@ class InstFetch extends Module {
 
   val if_stall = RegInit(false.B)
   val if_valid = RegInit(false.B)
-
   when (if_valid && stall) {
     if_stall := true.B
   }.elsewhen (!stall) {
     if_stall := false.B
   }
-
   when (pc_update && !stall) {
     if_valid := true.B
   }.otherwise {

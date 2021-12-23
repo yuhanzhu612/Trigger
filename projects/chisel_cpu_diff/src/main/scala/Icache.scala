@@ -24,9 +24,12 @@ class Icache extends Module {
   val idle :: ask :: fill :: fill_wait :: Nil = Enum(4)
   val state = RegInit(idle)
 
-  req_tag     := in.inst_addr(31,12)
-  req_index   := in.inst_addr(11, 4)
-  req_offset  := in.inst_addr( 3, 0)
+  val req_addr   = RegInit(0.U(32.W))
+  val valid_addr = Mux(state === ask, in.inst_addr, req_addr)
+
+  req_tag     := valid_addr(31,12)
+  req_index   := valid_addr(11, 4)
+  req_offset  := valid_addr( 3, 0)
 
   val cache_hit = Wire(Bool())
   cache_hit := (tag(req_index) === req_tag) && valid(req_index)
@@ -37,16 +40,13 @@ class Icache extends Module {
   val inst_req    = WireInit(false.B)
   val inst_addr   = WireInit(0.U(32.W))
   val inst_size   = WireInit(0.U(2.W))
-  val inst_read   = WireInit(0.U(32.W))
-  // val inst_ready  = RegInit(false.B)
+  val inst_read   = MuxLookup(req_offset(3, 2), 0.U, Array(
+                      "b00".U -> cache_data_out( 31, 0),
+                      "b01".U -> cache_data_out( 63,32),
+                      "b10".U -> cache_data_out( 95,64),
+                      "b11".U -> cache_data_out(127,96),
+                    ))
   val inst_ready  = state === ask && cache_hit
-
-  inst_read := MuxLookup(req_offset(3, 2), 0.U, Array(
-    "b00".U -> cache_data_out( 31, 0),
-    "b01".U -> cache_data_out( 63,32),
-    "b10".U -> cache_data_out( 95,64),
-    "b11".U -> cache_data_out(127,96),
-  ))
 
   val cache_fill  = RegInit(false.B)
   val cache_wen   = RegInit(false.B)
@@ -54,7 +54,6 @@ class Icache extends Module {
 
   switch (state) {
     is (idle) {
-     // inst_ready := false.B
       when (in.inst_valid) {
         state := ask
       }
@@ -63,15 +62,12 @@ class Icache extends Module {
     is (ask) {
       when (in.inst_valid) {
         when (cache_hit) {
-          valid(req_index)  := true.B
-          tag(req_index)    := req_tag
-          offset(req_index) := req_offset
-        //  inst_ready        := true.B
-          state             := ask
+          req_addr := in.inst_addr
+          state    := ask
         }
         .otherwise {
-          state       := fill
-        //  inst_ready  := false.B
+          req_addr := in.inst_addr
+          state    := fill
         }
       }
       .otherwise {
@@ -81,14 +77,14 @@ class Icache extends Module {
 
     is (fill) {
       when (~cache_fill) {
-        state := fill
+        state       := fill
         inst_valid  := true.B
-        inst_req    := in.inst_req
-        inst_addr   := in.inst_addr
-        inst_size   := in.inst_size
+        inst_req    := false.B
+        inst_addr   := req_addr
+        inst_size   := SIZE_W
       }
       .otherwise {
-        state := fill_wait
+        state       := fill_wait
       }
       when (out.inst_ready) {
         cache_fill  := true.B
@@ -100,12 +96,11 @@ class Icache extends Module {
 
     is (fill_wait) {
       cache_fill        := false.B
-    //  inst_ready        := true.B
       cache_wen         := false.B
       valid(req_index)  := true.B
       tag(req_index)    := req_tag
       offset(req_index) := req_offset
-      state             := idle
+      state             := ask
     }
   }
 
@@ -115,7 +110,6 @@ class Icache extends Module {
   out.inst_size   := inst_size
   in.inst_read    := inst_read
   in.inst_ready   := inst_ready
-
 
   val req = Module(new S011HD1P_X32Y2D128)
   req.io.CLK := clock
