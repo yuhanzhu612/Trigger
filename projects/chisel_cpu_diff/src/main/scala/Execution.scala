@@ -202,7 +202,6 @@ class Execution extends Module {
       when (resp_success) {
         load_data := io.dmem.data_read
         state := s_complete
-        // printf("[LD] pc=%x addr=%x rdata=%x -> %x\n", uop.pc, reg_addr, resp.bits.rdata, load_data)
       }
     }
     is (s_complete) {

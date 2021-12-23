@@ -246,26 +246,22 @@ class Decode extends Module {
   val id_valid  = io.in.valid
 
   //Next
-  //when (id_valid) {
-    io.out.valid      := id_valid
-    io.out.pc         := id_pc
-    io.out.inst       := id_inst
-    io.out.wen        := id_wen
-    io.out.wdest      := id_wdest
-    io.out.wdata      := id_wdata
-    io.out.op1        := Mux(my_inst, rs1_value, id_op1)
-    io.out.op2        := id_op2
-    io.out.typew      := id_typew
-    io.out.wmem       := rs2_value
-    io.out.opcode     := id_opcode
-    io.out.aluop      := id_aluop
-    io.out.loadop     := id_loadop
-    io.out.storeop    := id_storeop
-    io.out.sysop      := id_sysop
-    io.out.bp_taken   := 0.U
-    io.out.bp_targer  := 0.U
-  //}.otherwise {
-  //  io.out := RegInit(0.U.asTypeOf(new BUS_R))
-  //}
+  io.out.valid      := id_valid
+  io.out.pc         := id_pc
+  io.out.inst       := id_inst
+  io.out.wen        := id_wen
+  io.out.wdest      := id_wdest
+  io.out.wdata      := id_wdata
+  io.out.op1        := Mux(my_inst, rs1_value, id_op1)
+  io.out.op2        := id_op2
+  io.out.typew      := id_typew
+  io.out.wmem       := rs2_value
+  io.out.opcode     := id_opcode
+  io.out.aluop      := id_aluop
+  io.out.loadop     := id_loadop
+  io.out.storeop    := id_storeop
+  io.out.sysop      := id_sysop
+  io.out.bp_taken   := 0.U
+  io.out.bp_targer  := 0.U
   
 }

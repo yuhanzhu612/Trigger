@@ -54,13 +54,6 @@ class InstFetch extends Module {
     inst  := io.imem.inst_read
   }
 
-  // when (pc_update) {
-  //   if_valid := true.B
-  // }.elsewhen (if_stall) {
-  //   if_valid := true.B
-  // }.otherwise {
-  //   if_valid := false.B
-  // }
 
   val if_stall = RegInit(false.B)
   val if_valid = RegInit(false.B)
@@ -71,49 +64,32 @@ class InstFetch extends Module {
     if_stall := false.B
   }
 
-
-  // when (pc_update && !stall) {
-  //   if_valid := true.B
-  // }.elsewhen (if_stall) {
-  //   if_valid := true.B
-  // }.otherwise {
-  //   if_valid := false.B
-  // }
-
   when (pc_update && !stall) {
     if_valid := true.B
   }.otherwise {
     if_valid := false.B
   }
 
-  //val if_valid = (pc_update && !stall) || if_stall
-
   val if_pc   = Mux(mis || reg_mis, 0.U, pc)
   val if_inst = Mux(mis || reg_mis, 0.U, inst)
-  // val if_pc   = pc
-  // val if_inst = inst
 
-  // when (busy) {
-  //   io.out := reg_busR
-  // }.otherwise {
-    io.out.valid      := if_valid || if_stall
-    io.out.pc         := if_pc
-    io.out.inst       := if_inst
-    io.out.wen        := false.B
-    io.out.wdest      := 0.U
-    io.out.wdata      := 0.U
-    io.out.op1        := 0.U
-    io.out.op2        := 0.U
-    io.out.typew      := false.B
-    io.out.wmem       := 0.U
-    io.out.opcode     := 0.U
-    io.out.aluop      := 0.U
-    io.out.loadop     := 0.U
-    io.out.storeop    := 0.U
-    io.out.sysop      := 0.U
-    io.out.bp_taken   := bp.io.pred_br
-    io.out.bp_targer  := bp.io.pred_pc
-  //}
+  io.out.valid      := if_valid || if_stall
+  io.out.pc         := if_pc
+  io.out.inst       := if_inst
+  io.out.wen        := false.B
+  io.out.wdest      := 0.U
+  io.out.wdata      := 0.U
+  io.out.op1        := 0.U
+  io.out.op2        := 0.U
+  io.out.typew      := false.B
+  io.out.wmem       := 0.U
+  io.out.opcode     := 0.U
+  io.out.aluop      := 0.U
+  io.out.loadop     := 0.U
+  io.out.storeop    := 0.U
+  io.out.sysop      := 0.U
+  io.out.bp_taken   := bp.io.pred_br
+  io.out.bp_targer  := bp.io.pred_pc
   
 
 }
