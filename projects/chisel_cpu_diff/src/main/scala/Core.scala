@@ -18,7 +18,7 @@ class Core extends Module {
   val reg_ex_wb = Module(new PipelineReg)
   val writeback = Module(new WriteBack)
   val rf = Module(new RegFile)
-  //val csr = Module(new Csr)
+  val csr = Module(new Csr)
   //val clint = Module(new Clint)
 
   val flush = decode.io.jmp_packet.mis
@@ -30,7 +30,7 @@ class Core extends Module {
 
   reg_if_id.io.in         <> fetch.io.out
   reg_if_id.io.stall      := stall
-  reg_if_id.io.flush      := flush
+  reg_if_id.io.flush      := false.B
 
   decode.io.in            <> reg_if_id.io.out
   decode.io.rs1_data      := rf.io.rs1_data
@@ -48,6 +48,7 @@ class Core extends Module {
 
   execution.io.dmem       <> io.dmem
   execution.io.in         := reg_id_ex.io.out
+  execution.io.csr_rdata  := csr.io.csr_rdata
 
   reg_ex_wb.io.in         <> execution.io.out
   reg_ex_wb.io.stall      := stall
@@ -61,11 +62,11 @@ class Core extends Module {
   rf.io.wdest             := writeback.io.wdest
   rf.io.wdata             := writeback.io.wdata
 
-  // csr.io.in1                := writeback.io.op1
-  // csr.io.sysop              := writeback.io.sysop
-  // csr.io.inst               := execution.io.ex.inst
-  // csr.io.pc                 := writeback.io.wb.pc
-  // csr.io.flush              := writeback.io.flush
+  csr.io.in1              := writeback.io.op1
+  csr.io.sysop            := writeback.io.sysop
+  csr.io.inst             := execution.io.out.inst
+  csr.io.pc               := writeback.io.pc
+  csr.io.flush            := false.B
 
   // clint.io.mstatus          := csr.io.mstatus
   // clint.io.mie              := csr.io.mie
@@ -77,12 +78,20 @@ class Core extends Module {
 
   /* ----- Difftest ------------------------------ */
 
-  val valid   = writeback.io.ready_cmt
+  val valid   = writeback.io.ready_cmt && !stall
   val inst_my = writeback.io.inst === MY_INST
-  val print   = writeback.io.print
+  val op1     = writeback.io.op1
   val skip    = inst_my || (writeback.io.inst(31, 20) === Csrs.mcycle && writeback.io.sysop =/= 0.U)
 
+  val print_valid = RegInit(false.B)
+  val print       = RegInit(0.U(64.W))
   when (valid && inst_my) {
+    print_valid := true.B
+    print := op1
+  } .otherwise {
+    print_valid := false.B
+  }
+  when (print_valid) {
     printf("%c", print)
   }
 

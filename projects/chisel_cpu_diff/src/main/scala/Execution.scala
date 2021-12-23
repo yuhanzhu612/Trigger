@@ -8,6 +8,8 @@ class Execution extends Module {
     val in    = Input(new BUS_R)
     val out   = Output(new BUS_R)
     val busy  = Output(Bool())
+
+    val csr_rdata = Input(UInt(64.W))
     
     val dmem  = new CoreData
 
@@ -24,6 +26,13 @@ class Execution extends Module {
 
   val reg_busR  = RegInit(0.U.asTypeOf(new BUS_R))
 
+  // val ex_valid  = RegInit(false.B)
+  // when (io.in.valid) {
+  //   ex_valid := true.B
+  // }.otherwise {
+  //   ex_valid := false.B
+  // }
+  val ex_valid    = io.in.valid
   val ex_pc       = io.in.pc
   val ex_inst     = io.in.inst
   val ex_wen      = io.in.wen 
@@ -157,7 +166,7 @@ class Execution extends Module {
                     (Fill( 8, ex_inst === SH) & data_strb_sh) |  
                     (Fill( 8, ex_inst === SB) & data_strb_sb)
 
-  val ex_wdata    = Mux(load_en, mem_wdata, Mux(ex_sysop =/= 0.U, cmp_rdata, alu_result))
+  val ex_wdata    = Mux(load_en, mem_wdata, Mux(ex_sysop =/= 0.U, io.csr_rdata, alu_result))
 
   val reg_valid = RegInit(false.B)
   val reg_req   = RegInit(false.B)
@@ -172,9 +181,12 @@ class Execution extends Module {
 
   val s_idle :: s_wait :: s_complete :: Nil = Enum(3)
   val state = RegInit(s_idle)
+
+  //val busy = RegInit(false.B)
+
   switch (state) {
     is (s_idle) {
-      when (is_mem) {
+      when (is_mem && ex_valid) {
         state     := s_wait
         reg_busR  := io.in
         reg_valid := data_valid
@@ -183,6 +195,7 @@ class Execution extends Module {
         reg_write := data_write
         reg_size  := data_size
         reg_strb  := data_strb
+        //busy      := true.B
       }
     }
     is (s_wait) {
@@ -201,6 +214,7 @@ class Execution extends Module {
       reg_write := 0.U
       reg_size  := 0.U
       reg_strb  := 0.U
+      //busy      := false.B
     }
   }
 
@@ -211,7 +225,16 @@ class Execution extends Module {
   io.dmem.data_size   := reg_size
   io.dmem.data_strb   := reg_strb
 
-  val busy = ((state === s_idle) && is_mem) || (state === s_wait)
+  val busy = (((state === s_idle) && is_mem) || (state === s_wait)) && ex_valid
+
+  // val busy = RegInit(false.B)
+  // when (((state === s_idle) && is_mem) || (state === s_wait)) {
+  //   when (ex_valid) {
+  //     busy := true.B
+  //   }
+  // }.otherwise {
+  //   busy := false.B
+  // }
 
   io.busy := busy
 
@@ -219,6 +242,7 @@ class Execution extends Module {
   when (busy) {
     io.out := reg_busR
   }.otherwise {
+    io.out.valid    := ex_valid
     io.out.pc       := ex_pc
     io.out.inst     := ex_inst
     io.out.wen      := ex_wen
@@ -237,7 +261,7 @@ class Execution extends Module {
     io.out.bp_targer  := 0.U
   }
 
-  io.ex_wdest  := io.out.wdest
+  io.ex_wdest  := Mux(ex_valid, io.out.wdest, 0.U)
   io.ex_result := io.out.wdata
 
 }

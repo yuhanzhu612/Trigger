@@ -8,7 +8,7 @@ class Decode extends Module {
     val rs1_addr  = Output(UInt(5.W))
     val rs2_addr  = Output(UInt(5.W))
     val rs1_data  = Input(UInt(64.W))
-    val rs2_data = Input(UInt(64.W))
+    val rs2_data  = Input(UInt(64.W))
 
     val in  = Input(new BUS_R)
     val out = Output(new BUS_R)
@@ -24,8 +24,8 @@ class Decode extends Module {
 
   })
 
-  val id_pc   = io.in.pc
-  val id_inst = io.in.inst
+  val id_pc     = io.in.pc
+  val id_inst   = io.in.inst
   
   val inst = id_inst
 
@@ -237,21 +237,35 @@ class Decode extends Module {
   io.jmp_packet.jmp_pc  := br_target
   io.jmp_packet.mis     := io.jmp_packet.valid && mis_predict
 
+  // val id_valid  = RegInit(false.B)
+  // when (io.in.valid) {
+  //   id_valid := true.B
+  // }.otherwise {
+  //   id_valid := false.B
+  // }
+  val id_valid  = io.in.valid
+
   //Next
-  io.out.pc       := id_pc
-  io.out.inst     := id_inst
-  io.out.wen      := id_wen
-  io.out.wdest    := id_wdest
-  io.out.wdata    := id_wdata
-  io.out.op1      := Mux(my_inst, rs1_value, id_op1)
-  io.out.op2      := id_op2
-  io.out.typew    := id_typew
-  io.out.wmem     := rs2_value
-  io.out.opcode   := id_opcode
-  io.out.aluop    := id_aluop
-  io.out.loadop   := id_loadop
-  io.out.storeop  := id_storeop
-  io.out.sysop    := id_sysop
-  io.out.bp_taken   := 0.U
-  io.out.bp_targer  := 0.U
+  //when (id_valid) {
+    io.out.valid      := id_valid
+    io.out.pc         := id_pc
+    io.out.inst       := id_inst
+    io.out.wen        := id_wen
+    io.out.wdest      := id_wdest
+    io.out.wdata      := id_wdata
+    io.out.op1        := Mux(my_inst, rs1_value, id_op1)
+    io.out.op2        := id_op2
+    io.out.typew      := id_typew
+    io.out.wmem       := rs2_value
+    io.out.opcode     := id_opcode
+    io.out.aluop      := id_aluop
+    io.out.loadop     := id_loadop
+    io.out.storeop    := id_storeop
+    io.out.sysop      := id_sysop
+    io.out.bp_taken   := 0.U
+    io.out.bp_targer  := 0.U
+  //}.otherwise {
+  //  io.out := RegInit(0.U.asTypeOf(new BUS_R))
+  //}
+  
 }

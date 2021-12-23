@@ -12,57 +12,32 @@ class InstFetch extends Module {
     val out  = Output(new BUS_R)
   })
 
-  val s_init :: s_idle :: s_req :: s_wait :: Nil = Enum(4)
-  val state = RegInit(s_init)
-
   val stall = io.stall
 
-  val pc_init = "h80000000".U(32.W)
+  val pc_init = "h7ffffffc".U(32.W)
   val pc = RegInit(pc_init)
   val inst = RegInit(0.U(32.W))
   val bp = Module(new BrPredictor)
   val bp_pred_pc = bp.io.pred_pc
 
-  io.imem.inst_valid := (state === s_req ||state === s_wait) && !stall && !io.jmp_packet.mis
-  io.imem.inst_req   := false.B
-  io.imem.inst_addr  := pc.asUInt()
-  io.imem.inst_size  := SIZE_W
+  val mis = io.jmp_packet.mis                     // branch mis-predict
 
-  val resp_success = io.imem.inst_ready
-  val mis_count = RegInit(0.U(5.W))
-  def mis_increment() : Unit = { mis_count := Cat(mis_count(3, 0), 1.U)}
-  def mis_decrement() : Unit = { mis_count := Cat(0.U, mis_count(4, 1))}
-
-  switch (state) {
-    is (s_init) {
-      state := s_req
-    }
-    is (s_idle) {
-      pc := Mux(stall, pc, bp_pred_pc)
-      state := Mux(stall, s_idle, s_req)
-    }
-    is (s_req) {
-      when (io.jmp_packet.mis) {
-        pc := bp_pred_pc
-      } .elsewhen (!stall) {
-        state := s_wait
-      }
-    }
-    is (s_wait) {
-      when (io.jmp_packet.mis) {
-        pc := bp_pred_pc
-        mis_increment()
-        state := s_req
-      } .elsewhen (resp_success) {
-        when (mis_count === 0.U) {
-          inst := io.imem.inst_read
-          state := s_idle
-        } .otherwise {
-          mis_decrement()
-        }
-      }
-    }
+  val reg_mis = RegInit(false.B)                  // store branch mis-predict status
+  val mis_pc  = RegInit(0.U(32.W))
+  when (mis) {
+    reg_mis := true.B
+    mis_pc  := Mux(io.jmp_packet.jmp, io.jmp_packet.jmp_pc, io.jmp_packet.inst_pc + 4.U)
+  } .elsewhen (io.imem.inst_ready && !mis) {
+    reg_mis := false.B
+    mis_pc  := 0.U
   }
+
+  val npc = Mux(reg_mis, mis_pc, bp_pred_pc)
+
+  io.imem.inst_valid := true.B
+  io.imem.inst_req   := false.B
+  io.imem.inst_addr  := npc.asUInt()
+  io.imem.inst_size  := SIZE_W
 
   //branch prediction
   bp.io.pc := pc
@@ -73,24 +48,72 @@ class InstFetch extends Module {
                  (inst === Instructions.BGE) || (inst === Instructions.BGEU);
   bp.io.jmp_packet <> io.jmp_packet
 
-  val if_pc   = Mux(state === s_idle, pc, 0.U)
-  val if_inst = Mux(state === s_idle, inst, 0.U)
+  val pc_update  = io.imem.inst_ready
+  when (pc_update && !stall) {
+    pc    := npc
+    inst  := io.imem.inst_read
+  }
 
-  io.out.pc         := if_pc
-  io.out.inst       := if_inst
-  io.out.wen        := false.B
-  io.out.wdest      := 0.U
-  io.out.wdata      := 0.U
-  io.out.op1        := 0.U
-  io.out.op2        := 0.U
-  io.out.typew      := false.B
-  io.out.wmem       := 0.U
-  io.out.opcode     := 0.U
-  io.out.aluop      := 0.U
-  io.out.loadop     := 0.U
-  io.out.storeop    := 0.U
-  io.out.sysop      := 0.U
-  io.out.bp_taken   := bp.io.pred_br
-  io.out.bp_targer  := bp.io.pred_pc
+  // when (pc_update) {
+  //   if_valid := true.B
+  // }.elsewhen (if_stall) {
+  //   if_valid := true.B
+  // }.otherwise {
+  //   if_valid := false.B
+  // }
+
+  val if_stall = RegInit(false.B)
+  val if_valid = RegInit(false.B)
+
+  when (if_valid && stall) {
+    if_stall := true.B
+  }.elsewhen (!stall) {
+    if_stall := false.B
+  }
+
+
+  // when (pc_update && !stall) {
+  //   if_valid := true.B
+  // }.elsewhen (if_stall) {
+  //   if_valid := true.B
+  // }.otherwise {
+  //   if_valid := false.B
+  // }
+
+  when (pc_update && !stall) {
+    if_valid := true.B
+  }.otherwise {
+    if_valid := false.B
+  }
+
+  //val if_valid = (pc_update && !stall) || if_stall
+
+  val if_pc   = Mux(mis || reg_mis, 0.U, pc)
+  val if_inst = Mux(mis || reg_mis, 0.U, inst)
+  // val if_pc   = pc
+  // val if_inst = inst
+
+  // when (busy) {
+  //   io.out := reg_busR
+  // }.otherwise {
+    io.out.valid      := if_valid || if_stall
+    io.out.pc         := if_pc
+    io.out.inst       := if_inst
+    io.out.wen        := false.B
+    io.out.wdest      := 0.U
+    io.out.wdata      := 0.U
+    io.out.op1        := 0.U
+    io.out.op2        := 0.U
+    io.out.typew      := false.B
+    io.out.wmem       := 0.U
+    io.out.opcode     := 0.U
+    io.out.aluop      := 0.U
+    io.out.loadop     := 0.U
+    io.out.storeop    := 0.U
+    io.out.sysop      := 0.U
+    io.out.bp_taken   := bp.io.pred_br
+    io.out.bp_targer  := bp.io.pred_pc
+  //}
+  
 
 }

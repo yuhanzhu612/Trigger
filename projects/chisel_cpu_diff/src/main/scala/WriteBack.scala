@@ -8,8 +8,8 @@ class WriteBack extends Module {
 
   val pc    = Output(UInt(32.W))
   val inst  = Output(UInt(32.W))
-  val print = Output(UInt(64.W))
-  val sysop = Output(Bool())
+  val op1   = Output(UInt(64.W))
+  val sysop = Output(UInt(SYS_X.length.W))
 
   val wen   = Output(Bool())
   val wdest = Output(UInt(5.W))
@@ -21,6 +21,13 @@ class WriteBack extends Module {
   val ready_cmt = Output(Bool())
   })
 
+  // val wb_valid  = RegInit(false.B)
+  // when (io.in.valid) {
+  //   wb_valid := true.B
+  // }.otherwise {
+  //   wb_valid := false.B
+  // }
+  val wb_valid = io.in.valid
   val wb_pc    = io.in.pc
   val wb_inst  = io.in.inst
   val wb_wen   = io.in.wen
@@ -35,17 +42,17 @@ class WriteBack extends Module {
 
   io.pc         := wb_pc
   io.inst       := wb_inst
-  io.print      := wb_op1
+  io.op1        := wb_op1
   io.sysop      := wb_sysop
 
-  io.wen        := wb_wen
+  io.wen        := wb_wen && wb_valid
   io.wdest      := wb_wdest
   io.wdata      := wb_wdata
-  io.ready_cmt  := wb_inst =/= 0.U
+  io.ready_cmt  := wb_inst =/= 0.U && wb_valid
 
   //io.flush := (wb_sysop === s"b$SYS_ECALL".U || wb_sysop === s"b$SYS_MRET".U || wb_sysop === s"b$SYS_INT".U)
 
-  io.wb_wdest  := io.wdest
+  io.wb_wdest  := Mux(wb_valid, io.wdest, 0.U)
   io.wb_result := io.wdata
 
 }

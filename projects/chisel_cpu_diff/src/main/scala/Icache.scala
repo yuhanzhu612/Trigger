@@ -38,7 +38,8 @@ class Icache extends Module {
   val inst_addr   = WireInit(0.U(32.W))
   val inst_size   = WireInit(0.U(2.W))
   val inst_read   = WireInit(0.U(32.W))
-  val inst_ready  = RegInit(false.B)
+  // val inst_ready  = RegInit(false.B)
+  val inst_ready  = state === ask && cache_hit
 
   inst_read := MuxLookup(req_offset(3, 2), 0.U, Array(
     "b00".U -> cache_data_out( 31, 0),
@@ -53,22 +54,28 @@ class Icache extends Module {
 
   switch (state) {
     is (idle) {
-      inst_ready := false.B
+     // inst_ready := false.B
       when (in.inst_valid) {
         state := ask
       }
     }
 
     is (ask) {
-      when (cache_hit) {
-        valid(req_index)  := true.B
-        tag(req_index)    := req_tag
-        offset(req_index) := req_offset
-        inst_ready        := true.B
-        state             := idle
+      when (in.inst_valid) {
+        when (cache_hit) {
+          valid(req_index)  := true.B
+          tag(req_index)    := req_tag
+          offset(req_index) := req_offset
+        //  inst_ready        := true.B
+          state             := ask
+        }
+        .otherwise {
+          state       := fill
+        //  inst_ready  := false.B
+        }
       }
       .otherwise {
-        state       := fill
+        state := idle
       }
     }
 
@@ -93,7 +100,7 @@ class Icache extends Module {
 
     is (fill_wait) {
       cache_fill        := false.B
-      inst_ready        := true.B
+    //  inst_ready        := true.B
       cache_wen         := false.B
       valid(req_index)  := true.B
       tag(req_index)    := req_tag
