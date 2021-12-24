@@ -158,13 +158,6 @@ class Execution extends Module {
 
   val ex_wdata    = Mux(load_en, mem_wdata, Mux(ex_sysop =/= 0.U, io.csr_rdata, alu_result))
 
-  val reg_valid = RegInit(false.B)
-  val reg_req   = RegInit(false.B)
-  val reg_addr  = RegInit(0.U(64.W))
-  val reg_write = RegInit(0.U(64.W))
-  val reg_size  = RegInit(0.U(2.W))
-  val reg_strb  = RegInit(0.U(8.W))
-
   val is_mem    = load_en || store_en
   val load_data = RegInit(UInt(64.W), 0.U)
   val resp_success = io.dmem.data_ready
@@ -178,13 +171,6 @@ class Execution extends Module {
     is (s_idle) {
       when (is_mem && ex_valid) {
         state     := s_wait
-        reg_busR  := io.in
-        reg_valid := data_valid
-        reg_req   := data_req
-        reg_addr  := data_addr
-        reg_write := data_write
-        reg_size  := data_size
-        reg_strb  := data_strb
       }
     }
     is (s_wait) {
@@ -195,22 +181,15 @@ class Execution extends Module {
     }
     is (s_complete) {
       state := s_idle
-      reg_busR := 0.U.asTypeOf(new BUS_R)
-      reg_valid := false.B
-      reg_req   := false.B
-      reg_addr  := 0.U
-      reg_write := 0.U
-      reg_size  := 0.U
-      reg_strb  := 0.U
     }
   }
 
-  io.dmem.data_valid  := reg_valid
-  io.dmem.data_req    := reg_req
-  io.dmem.data_addr   := reg_addr
-  io.dmem.data_write  := reg_write
-  io.dmem.data_size   := reg_size
-  io.dmem.data_strb   := reg_strb
+  io.dmem.data_valid  := state === s_idle && is_mem && ex_valid
+  io.dmem.data_req    := data_req
+  io.dmem.data_addr   := data_addr
+  io.dmem.data_write  := data_write
+  io.dmem.data_size   := data_size
+  io.dmem.data_strb   := data_strb
 
   val busy = (((state === s_idle) && is_mem) || (state === s_wait)) && ex_valid
   io.busy := busy

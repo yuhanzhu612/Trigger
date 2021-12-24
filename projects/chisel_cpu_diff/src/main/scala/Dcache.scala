@@ -128,10 +128,7 @@ class Dcache extends Module {
     }
 
     is (ask) {
-      when (!in.data_valid) {
-        state := idle
-      }
-      .elsewhen (cache_hit) {
+      when (cache_hit) {
         valid(req_index)  := true.B
         tag(req_index)    := req_tag
         offset(req_index) := req_offset

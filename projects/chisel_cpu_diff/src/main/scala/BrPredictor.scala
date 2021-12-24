@@ -95,7 +95,7 @@ class BrPredictor extends Module {
 
   val btb_raddr = btbAddr(pc)
   val btb_rdata = btb(btb_raddr)
-  val btb_rhit = btb_rdata.valid && (btb_rdata.tag === btbTag(pc))
+  val btb_rhit = btb_rdata.valid && (btb_rdata.tag === btbTag(pc)) && is_br
 
   // BTB update logic
 
