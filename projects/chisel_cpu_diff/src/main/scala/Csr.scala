@@ -9,6 +9,7 @@ class Csr extends Module {
     val in1   = Input(UInt(64.W))
     val pc    = Input(UInt(32.W))
     val inst  = Input(UInt(32.W))
+    val raddr = Input(UInt(12.W))
     val sysop = Input(UInt(SYS_X.length.W))
     val csr_rdata = Output(UInt(64.W))
     val csr_jmp = Output(Bool())
@@ -16,6 +17,8 @@ class Csr extends Module {
 
     val mstatus = Output(UInt(64.W))
     val mie     = Output(UInt(64.W))
+    val mtvec   = Output(UInt(64.W))
+    val mepc    = Output(UInt(64.W))
 
     val flush   = Input(Bool())
   })
@@ -88,55 +91,65 @@ class Csr extends Module {
 
   // CSR register read/write
 
-  val addr = io.inst(31, 20)
-  val rdata = WireInit(UInt(64.W), 0.U)
-  val wdata = Wire(UInt(64.W))
-  val wen = csr_rw
+  val waddr = io.inst(31, 20)
+  val raddr = io.raddr
+  val wen   = csr_rw
+  val op1   = MuxLookup(waddr, 0.U, Array(
+                Csrs.mstatus  -> mstatus,
+                Csrs.mcause   -> mcause,
+                Csrs.mie      -> mie,
+                Csrs.mtvec    -> mtvec,
+                Csrs.mscratch -> mscratch,
+                Csrs.mepc     -> mepc,
+                Csrs.mip      -> mip,
+                Csrs.mcycle   -> mcycle,
+                Csrs.minstret -> minstret,
+              ))
 
-  wdata := MuxLookup(io.sysop, 0.U, Array(
-    s"b$SYS_CSRRW".U  -> in1,
-    s"b$SYS_CSRRS".U  -> (rdata | in1),
-    s"b$SYS_CSRRC".U  -> (rdata & ~in1),
-    s"b$SYS_CSRRSI".U -> (rdata | in2),
-    s"b$SYS_CSRRCI".U -> (rdata & ~in2),
-  ))
+  val rdata = MuxLookup(raddr, 0.U, Array(
+                Csrs.mstatus  -> mstatus,
+                Csrs.mcause   -> mcause,
+                Csrs.mie      -> mie,
+                Csrs.mtvec    -> mtvec,
+                Csrs.mscratch -> mscratch,
+                Csrs.mepc     -> mepc,
+                Csrs.mip      -> mip,
+                Csrs.mcycle   -> mcycle,
+                Csrs.minstret -> minstret,
+              ))
 
-  rdata := MuxLookup(addr, 0.U, Array(
-    Csrs.mstatus  -> mstatus,
-    Csrs.mcause   -> mcause,
-    Csrs.mie      -> mie,
-    Csrs.mtvec    -> mtvec,
-    Csrs.mscratch -> mscratch,
-    Csrs.mepc     -> mepc,
-    Csrs.mip      -> mip,
-    Csrs.mcycle   -> mcycle,
-    Csrs.minstret -> minstret,
-  ))
+  val wdata = MuxLookup(io.sysop, 0.U, Array(
+                s"b$SYS_CSRRW".U  -> in1,
+                s"b$SYS_CSRRS".U  -> (op1 | in1),
+                s"b$SYS_CSRRC".U  -> (op1 & ~in1),
+                s"b$SYS_CSRRSI".U -> (op1 | in2),
+                s"b$SYS_CSRRCI".U -> (op1 & ~in2),
+              ))
   
   io.csr_rdata := rdata
 
   when(wen) {
-    when(addr === Csrs.mcycle) {
+    when(waddr === Csrs.mcycle) {
       mcycle := wdata 
     }
-    when(addr === Csrs.mtvec) {
+    when(waddr === Csrs.mtvec) {
       mtvec := wdata 
     }
-    when(addr === Csrs.mepc) {
+    when(waddr === Csrs.mepc) {
       mepc := wdata 
     }
-    when(addr === Csrs.mcause) {
+    when(waddr === Csrs.mcause) {
       mcause := wdata 
     }
-    when(addr === Csrs.mstatus) {
+    when(waddr === Csrs.mstatus) {
       // mstatus(62, 0)  := wdata(62, 0)
       // mstatus(63)     := (wdata(16) && wdata(15)) || (wdata(14) && wdata(13))
       mstatus := Cat((wdata(16) & wdata(15)) | (wdata(14) && wdata(13)), wdata(62, 0))
     }
-    when(addr === Csrs.mie) {
+    when(waddr === Csrs.mie) {
       mie := wdata 
     }
-    when(addr === Csrs.mscratch) {
+    when(waddr === Csrs.mscratch) {
       mscratch := wdata 
     }
   }
@@ -145,30 +158,30 @@ class Csr extends Module {
   io.newpc := newpc
   io.mstatus := mstatus
   io.mie := mie
+  io.mtvec := mtvec
+  io.mepc := mepc
 
   // difftest for CSR state
 
-  when (EnableCSR) {
-    val dt_cs = Module(new DifftestCSRState)
-    dt_cs.io.clock          := clock
-    dt_cs.io.coreid         := 0.U
-    dt_cs.io.priviledgeMode := 3.U        // machine mode
-    dt_cs.io.mstatus        := mstatus
-    dt_cs.io.sstatus        := mstatus & "h80000003000de122".U
-    dt_cs.io.mepc           := mepc
-    dt_cs.io.sepc           := 0.U
-    dt_cs.io.mtval          := 0.U
-    dt_cs.io.stval          := 0.U
-    dt_cs.io.mtvec          := mtvec
-    dt_cs.io.stvec          := 0.U
-    dt_cs.io.mcause         := mcause
-    dt_cs.io.scause         := 0.U
-    dt_cs.io.satp           := 0.U
-    dt_cs.io.mip            := 0.U
-    dt_cs.io.mie            := mie
-    dt_cs.io.mscratch       := mscratch
-    dt_cs.io.sscratch       := 0.U
-    dt_cs.io.mideleg        := 0.U
-    dt_cs.io.medeleg        := 0.U
-  }
+  val dt_cs = Module(new DifftestCSRState)
+  dt_cs.io.clock          := clock
+  dt_cs.io.coreid         := 0.U
+  dt_cs.io.priviledgeMode := 3.U        // machine mode
+  dt_cs.io.mstatus        := mstatus
+  dt_cs.io.sstatus        := mstatus & "h80000003000de122".U
+  dt_cs.io.mepc           := mepc
+  dt_cs.io.sepc           := 0.U
+  dt_cs.io.mtval          := 0.U
+  dt_cs.io.stval          := 0.U
+  dt_cs.io.mtvec          := mtvec
+  dt_cs.io.stvec          := 0.U
+  dt_cs.io.mcause         := mcause
+  dt_cs.io.scause         := 0.U
+  dt_cs.io.satp           := 0.U
+  dt_cs.io.mip            := 0.U
+  dt_cs.io.mie            := mie
+  dt_cs.io.mscratch       := mscratch
+  dt_cs.io.sscratch       := 0.U
+  dt_cs.io.mideleg        := 0.U
+  dt_cs.io.medeleg        := 0.U
 }

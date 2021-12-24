@@ -17,6 +17,9 @@ class Decode extends Module {
 
     val stall       = Input(Bool())
 
+    val mtvec       = Input(UInt(64.W))
+    val mepc        = Input(UInt(64.W))
+
     val time_int    = Input(Bool())
 
     val ex_wdest    = Input(UInt(5.W))
@@ -211,31 +214,55 @@ class Decode extends Module {
   val id_bp_taken   = io.in.bp_taken
   val id_bp_targer  = io.in.bp_targer   
 
-  val br_taken  = (jal  && true.B) | 
-                  (jalr && true.B) |  
-                  (beq  && rs1_value === rs2_value) |  
-                  (bne  && rs1_value =/= rs2_value) |
-                  (blt  && rs1_value.asSInt() <  rs2_value.asSInt()) |
-                  (bge  && rs1_value.asSInt() >= rs2_value.asSInt()) |
-                  (bltu && rs1_value.asUInt() <  rs2_value.asUInt()) |
-                  (bgeu && rs1_value.asUInt() >= rs2_value.asUInt())       
-  val br_target = (Fill(32, jal ) & id_pc     + imm_j) | 
-                  (Fill(32, jalr) & rs1_value + imm_i) |  
-                  (Fill(32, beq ) & id_pc     + imm_b) |  
-                  (Fill(32, bne ) & id_pc     + imm_b) |
-                  (Fill(32, blt ) & id_pc     + imm_b) |
-                  (Fill(32, bge ) & id_pc     + imm_b) |
-                  (Fill(32, bltu) & id_pc     + imm_b) |
-                  (Fill(32, bgeu) & id_pc     + imm_b)                          
+  // val br_taken  = (jal  && true.B) | 
+  //                 (jalr && true.B) |  
+  //                 (beq  && rs1_value === rs2_value) |  
+  //                 (bne  && rs1_value =/= rs2_value) |
+  //                 (blt  && rs1_value.asSInt() <  rs2_value.asSInt()) |
+  //                 (bge  && rs1_value.asSInt() >= rs2_value.asSInt()) |
+  //                 (bltu && rs1_value.asUInt() <  rs2_value.asUInt()) |
+  //                 (bgeu && rs1_value.asUInt() >= rs2_value.asUInt())       
+  // val br_target = (Fill(32, jal ) & id_pc     + imm_j) | 
+  //                 (Fill(32, jalr) & rs1_value + imm_i) |  
+  //                 (Fill(32, beq ) & id_pc     + imm_b) |  
+  //                 (Fill(32, bne ) & id_pc     + imm_b) |
+  //                 (Fill(32, blt ) & id_pc     + imm_b) |
+  //                 (Fill(32, bge ) & id_pc     + imm_b) |
+  //                 (Fill(32, bltu) & id_pc     + imm_b) |
+  //                 (Fill(32, bgeu) & id_pc     + imm_b)                          
 
-  val br_stall    = io.stall && (rs1_forward || rs2_forward) //br_target not ready
+  val ctrl = Module(new Ctrl)
+  val redirectop = (Fill(REDIRECT_X.length, jal  ) & s"b$REDIRECT_JAL".U  ) |
+                   (Fill(REDIRECT_X.length, jalr ) & s"b$REDIRECT_JALR".U ) |
+                   (Fill(REDIRECT_X.length, beq  ) & s"b$REDIRECT_BEQ".U  ) |
+                   (Fill(REDIRECT_X.length, bne  ) & s"b$REDIRECT_BNE".U  ) |
+                   (Fill(REDIRECT_X.length, blt  ) & s"b$REDIRECT_BLT".U  ) |
+                   (Fill(REDIRECT_X.length, bge  ) & s"b$REDIRECT_BGE".U  ) |
+                   (Fill(REDIRECT_X.length, bltu ) & s"b$REDIRECT_BLTU".U ) |
+                   (Fill(REDIRECT_X.length, bgeu ) & s"b$REDIRECT_BGEU".U ) |
+                   (Fill(REDIRECT_X.length, ecall) & s"b$REDIRECT_ECALL".U) |
+                   (Fill(REDIRECT_X.length, mret ) & s"b$REDIRECT_MRET".U ) |
+                   (Fill(REDIRECT_X.length, t_int) & s"b$REDIRECT_INT".U  )
+  ctrl.io.redirectop := redirectop
+  ctrl.io.pc         := id_pc
+  ctrl.io.imm_i      := imm_i
+  ctrl.io.imm_j      := imm_j
+  ctrl.io.imm_b      := imm_b
+  ctrl.io.rs1_value  := rs1_value
+  ctrl.io.rs2_value  := rs2_value
+  ctrl.io.mtvec      := io.mtvec
+  ctrl.io.mepc       := io.mepc
 
-  val mis_predict = Mux(br_taken, (id_bp_taken && (br_target =/= id_bp_targer)) || !id_bp_taken, id_bp_taken) && !br_stall
+  val br_stall    = io.stall && (rs1_forward || rs2_forward) //branch target not ready
 
-  io.jmp_packet.valid   := typeJ || typeB || ecall || mret
+  val jmp_valid   = ctrl.io.jmp
+  val jmp_pc      = ctrl.io.target
+  val mis_predict = Mux(jmp_valid, (id_bp_taken && (jmp_pc =/= id_bp_targer)) || !id_bp_taken, id_bp_taken) && !br_stall
+
+  io.jmp_packet.valid   := redirectop =/= 0.U
   io.jmp_packet.inst_pc := id_pc
-  io.jmp_packet.jmp     := br_taken
-  io.jmp_packet.jmp_pc  := br_target
+  io.jmp_packet.jmp     := jmp_valid
+  io.jmp_packet.jmp_pc  := jmp_pc
   io.jmp_packet.mis     := io.jmp_packet.valid && mis_predict
 
   io.rs1_addr           := rs1_addr

@@ -9,6 +9,7 @@ class Execution extends Module {
     val out   = Output(new BUS_R)
     val busy  = Output(Bool())
 
+    val csr_raddr = Output(UInt(12.W))
     val csr_rdata = Input(UInt(64.W))
     
     val dmem  = new CoreData
@@ -71,6 +72,9 @@ class Execution extends Module {
   // io.cmp_wdata  := cmp_wdata
   // val cmp_rdata  = io.cmp_rdata
   val cmp_rdata  = 0.U
+
+  //csr
+  io.csr_raddr    := ex_inst(31, 20)
 
 
   //mem

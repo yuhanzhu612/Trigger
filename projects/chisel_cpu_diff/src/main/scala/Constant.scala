@@ -53,6 +53,19 @@ trait Constant {
   val TYPE_J    = "000010"
   val TYPE_B    = "000001"
 
+  val REDIRECT_X      = "???????????"
+  val REDIRECT_BEQ    = "10000000000"
+  val REDIRECT_BNE    = "01000000000"
+  val REDIRECT_BLT    = "00100000000"
+  val REDIRECT_BGE    = "00010000000"
+  val REDIRECT_BLTU   = "00001000000"
+  val REDIRECT_BGEU   = "00000100000"
+  val REDIRECT_JAL    = "00000010000"
+  val REDIRECT_JALR   = "00000001000"
+  val REDIRECT_ECALL  = "00000000100"
+  val REDIRECT_MRET   = "00000000010"
+  val REDIRECT_INT    = "00000000001"
+
   val REQ_READ  = 0.U
   val REQ_WRITE = 1.U
 
@@ -62,7 +75,7 @@ trait Constant {
   val CLINT_MTIME     = "h000000000200bff8".U
 
   val EnableDifftest  = true.B
-  val EnableCSR       = false.B
+  val EnableCSR       = true.B
   val EnableIcache    = true.B
   val EnableDcache    = true.B
 }

@@ -18,6 +18,8 @@ class WriteBack extends Module {
   val wb_wdest  = Output(UInt(5.W))
   val wb_result = Output(UInt(64.W))
 
+  val csr_flush = Output(Bool())
+
   val ready_cmt = Output(Bool())
   })
 
@@ -50,7 +52,7 @@ class WriteBack extends Module {
   io.wdata      := wb_wdata
   io.ready_cmt  := wb_inst =/= 0.U && wb_valid
 
-  //io.flush := (wb_sysop === s"b$SYS_ECALL".U || wb_sysop === s"b$SYS_MRET".U || wb_sysop === s"b$SYS_INT".U)
+  io.csr_flush  := (wb_sysop === s"b$SYS_ECALL".U || wb_sysop === s"b$SYS_MRET".U || wb_sysop === s"b$SYS_INT".U)
 
   io.wb_wdest  := Mux(wb_valid, io.wdest, 0.U)
   io.wb_result := io.wdata

@@ -41,6 +41,8 @@ class Core extends Module {
   decode.io.ex_result     := execution.io.ex_result
   decode.io.wb_wdest      := writeback.io.wb_wdest
   decode.io.wb_result     := writeback.io.wb_result
+  decode.io.mtvec         := csr.io.mtvec
+  decode.io.mepc          := csr.io.mepc
   // decode.io.time_int        := clint.io.time_int
 
   reg_id_ex.io.in         <> decode.io.out
@@ -65,9 +67,10 @@ class Core extends Module {
 
   csr.io.in1              := writeback.io.op1
   csr.io.sysop            := writeback.io.sysop
-  csr.io.inst             := execution.io.out.inst
+  csr.io.raddr            := execution.io.csr_raddr
+  csr.io.inst             := writeback.io.inst
   csr.io.pc               := writeback.io.pc
-  csr.io.flush            := false.B
+  csr.io.flush            := writeback.io.csr_flush
 
   // clint.io.mstatus          := csr.io.mstatus
   // clint.io.mie              := csr.io.mie
@@ -143,26 +146,26 @@ class Core extends Module {
     dt_te.io.cycleCnt := cycle_cnt
     dt_te.io.instrCnt := instr_cnt
 
-    val dt_cs = Module(new DifftestCSRState)
-    dt_cs.io.clock          := clock
-    dt_cs.io.coreid         := 0.U
-    dt_cs.io.priviledgeMode := 3.U  // Machine mode
-    dt_cs.io.mstatus        := 0.U
-    dt_cs.io.sstatus        := 0.U
-    dt_cs.io.mepc           := 0.U
-    dt_cs.io.sepc           := 0.U
-    dt_cs.io.mtval          := 0.U
-    dt_cs.io.stval          := 0.U
-    dt_cs.io.mtvec          := 0.U
-    dt_cs.io.stvec          := 0.U
-    dt_cs.io.mcause         := 0.U
-    dt_cs.io.scause         := 0.U
-    dt_cs.io.satp           := 0.U
-    dt_cs.io.mip            := 0.U
-    dt_cs.io.mie            := 0.U
-    dt_cs.io.mscratch       := 0.U
-    dt_cs.io.sscratch       := 0.U
-    dt_cs.io.mideleg        := 0.U
-    dt_cs.io.medeleg        := 0.U
+    // val dt_cs = Module(new DifftestCSRState)
+    // dt_cs.io.clock          := clock
+    // dt_cs.io.coreid         := 0.U
+    // dt_cs.io.priviledgeMode := 3.U  // Machine mode
+    // dt_cs.io.mstatus        := 0.U
+    // dt_cs.io.sstatus        := 0.U
+    // dt_cs.io.mepc           := 0.U
+    // dt_cs.io.sepc           := 0.U
+    // dt_cs.io.mtval          := 0.U
+    // dt_cs.io.stval          := 0.U
+    // dt_cs.io.mtvec          := 0.U
+    // dt_cs.io.stvec          := 0.U
+    // dt_cs.io.mcause         := 0.U
+    // dt_cs.io.scause         := 0.U
+    // dt_cs.io.satp           := 0.U
+    // dt_cs.io.mip            := 0.U
+    // dt_cs.io.mie            := 0.U
+    // dt_cs.io.mscratch       := 0.U
+    // dt_cs.io.sscratch       := 0.U
+    // dt_cs.io.mideleg        := 0.U
+    // dt_cs.io.medeleg        := 0.U
   }
 }
