@@ -1,20 +1,24 @@
 # Trigger
 
-My cpu!
+Trigger是一个4级流水线顺序单发射处理器核，兼容RVI64，可成功起rt-thread.
+代码存放在[这里]https://github.com/yuhanzhu612/Trigger/tree/super_scalar/projects/chisel_cpu_diff/src/main/scala
 
 
-### cpu_axi_diff
+## 流水线设计
 
-`projects/cpu_diff`目录下存放了通过`AXI总线`接入`香山difftest框架`的`verilog`版本单周期`RISC-V`CPU例程源码，源码实现了`RV64I`指令`addi`和`AXI总线`读逻辑。可以使用下面的命令编译和仿真。
+### 取指级
 
-```shell
-./build.sh -e cpu_axi_diff -d -s -a "-i inst_diff.bin --wave-path=wave.vcd --dump-wave -b 0" -m "EMU_TRACE=1 WITH_DRAMSIM3=1" -b
-```
+主要任务是取指令。将分支预测器预测出来的nextpc送给Icache，Icache将该nextpc所在块的指令返回给取值级。只有收到了有效指令，有效数据才会流向下一级.
 
-### chisel_cpu_diff
+### 译码级
 
-`projects/cpu_diff`目录下存放了接入`香山difftest框架`的`chisel`版本单周期`RISC-V` CPU例程源码，源码实现了`RV64I`指令`addi`。可以使用下面的命令编译和仿真。
+主要任务为译码、取源操作数和判断下一条指令是否转移。译码级收到取值级送过来的有效指令，将其译码，分析该指令的行为。如果该条指令会引起下一条指令的转移，则会修改分支预测器.
 
-```shell
-./build.sh -e chisel_cpu_diff -d -s -a "-i inst_diff.bin" -m "EMU_TRACE=1" -b
-```
+### 执行级
+
+主要任务为产生计算结果，如果是load/store指令，则会在该级访Dcache，直到访问结束。执行级收到译码级送过来的源操作数，送到功能单元得到计算结果，送到写回级写回.
+
+### 写回级
+
+主要任务是写寄存器堆和写CSR.
+
