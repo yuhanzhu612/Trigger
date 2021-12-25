@@ -147,7 +147,7 @@ class Decode extends Module {
   val wb_wdest    = io.wb_wdest
   val wb_result   = io.wb_result
 
-  val t_int       = io.time_int
+  val t_int       = io.time_int && id_valid
   
   val rs1_forward = (rs1_addr =/= 0.U) && (rs1_addr === ex_wdest || rs1_addr === wb_wdest) && rs1_en
   val rs2_forward = (rs2_addr =/= 0.U) && (rs2_addr === ex_wdest || rs2_addr === wb_wdest) && rs2_en
@@ -212,24 +212,7 @@ class Decode extends Module {
                   subw  || sllw  || srlw  || sraw
 
   val id_bp_taken   = io.in.bp_taken
-  val id_bp_targer  = io.in.bp_targer   
-
-  // val br_taken  = (jal  && true.B) | 
-  //                 (jalr && true.B) |  
-  //                 (beq  && rs1_value === rs2_value) |  
-  //                 (bne  && rs1_value =/= rs2_value) |
-  //                 (blt  && rs1_value.asSInt() <  rs2_value.asSInt()) |
-  //                 (bge  && rs1_value.asSInt() >= rs2_value.asSInt()) |
-  //                 (bltu && rs1_value.asUInt() <  rs2_value.asUInt()) |
-  //                 (bgeu && rs1_value.asUInt() >= rs2_value.asUInt())       
-  // val br_target = (Fill(32, jal ) & id_pc     + imm_j) | 
-  //                 (Fill(32, jalr) & rs1_value + imm_i) |  
-  //                 (Fill(32, beq ) & id_pc     + imm_b) |  
-  //                 (Fill(32, bne ) & id_pc     + imm_b) |
-  //                 (Fill(32, blt ) & id_pc     + imm_b) |
-  //                 (Fill(32, bge ) & id_pc     + imm_b) |
-  //                 (Fill(32, bltu) & id_pc     + imm_b) |
-  //                 (Fill(32, bgeu) & id_pc     + imm_b)                          
+  val id_bp_targer  = io.in.bp_targer                           
 
   val ctrl = Module(new Ctrl)
   val redirectop = (Fill(REDIRECT_X.length, jal  ) & s"b$REDIRECT_JAL".U  ) |
@@ -279,6 +262,7 @@ class Decode extends Module {
   io.out.op2        := id_op2
   io.out.typew      := id_typew
   io.out.wmem       := rs2_value
+  io.out.mem_addr   := 0.U
   io.out.opcode     := id_opcode
   io.out.aluop      := id_aluop
   io.out.loadop     := id_loadop

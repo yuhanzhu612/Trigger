@@ -6,6 +6,7 @@ class Clint extends Module {
   val io = IO(new Bundle {
     val  mstatus    = Input(UInt(64.W))
     val  mie        = Input(UInt(64.W))
+    val  exc        = Input(Bool())
 
     val  cmp_ren    = Input(Bool())
     val  cmp_wen    = Input(Bool())
@@ -18,6 +19,7 @@ class Clint extends Module {
 
   val  mstatus    = io.mstatus
   val  mie        = io.mie
+  val  exc        = io.exc
   val  cmp_ren    = io.cmp_ren
   val  cmp_wen    = io.cmp_wen
   val  cmp_addr   = io.cmp_addr
@@ -31,7 +33,7 @@ class Clint extends Module {
     mtimecmp := cmp_wdata
   }
 
-  io.time_int  := mtime >= mtimecmp && mstatus(3) === 1.U && mie(7) === 1.U
+  io.time_int  := mtime >= mtimecmp && mstatus(3) === 1.U && mie(7) === 1.U && !exc
 
   io.cmp_rdata := Mux(cmp_ren, Mux(cmp_addr === CLINT_MTIME, mtime, mtimecmp), 0.U)
 

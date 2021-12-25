@@ -14,11 +14,11 @@ class Execution extends Module {
     
     val dmem  = new CoreData
 
-    // val cmp_ren    = Output(Bool())
-    // val cmp_wen    = Output(Bool())
-    // val cmp_addr   = Output(UInt(64.W))
-    // val cmp_wdata  = Output(UInt(64.W))
-    // val cmp_rdata  = Input(UInt(64.W))
+    val cmp_ren    = Output(Bool())
+    val cmp_wen    = Output(Bool())
+    val cmp_addr   = Output(UInt(64.W))
+    val cmp_wdata  = Output(UInt(64.W))
+    val cmp_rdata  = Input(UInt(64.W))
 
     val ex_wdest  = Output(UInt(5.W))
     val ex_result = Output(UInt(64.W))
@@ -65,24 +65,21 @@ class Execution extends Module {
   val cmp_wen   = ex_storeop =/= 0.U && (io.dmem.data_addr === CLINT_MTIMECMP || io.dmem.data_addr === CLINT_MTIME)
   val cmp_addr  = io.dmem.data_addr
   val cmp_wdata = io.dmem.data_write
-
-  // io.cmp_ren    := cmp_ren
-  // io.cmp_wen    := cmp_wen
-  // io.cmp_addr   := cmp_addr
-  // io.cmp_wdata  := cmp_wdata
-  // val cmp_rdata  = io.cmp_rdata
-  val cmp_rdata  = 0.U
+  io.cmp_ren    := cmp_ren
+  io.cmp_wen    := cmp_wen
+  io.cmp_addr   := cmp_addr
+  io.cmp_wdata  := cmp_wdata
+  val cmp_rdata  = io.cmp_rdata
 
   //csr
   io.csr_raddr    := ex_inst(31, 20)
-
 
   //mem
   val load_en     = ex_loadop =/= 0.U
   val store_en    = ex_storeop =/= 0.U
   val data_valid  = (load_en || store_en) && (!cmp_ren && !cmp_wen)
-  val data_req    = store_en
-  val data_addr   = alu_result
+  val data_req    = store_en && !cmp_wen
+  val data_addr   = alu_result(31, 0)
   val data_read   = Mux(cmp_ren, cmp_rdata, io.dmem.data_read)
   val data_ready  = io.dmem.data_ready
 
@@ -101,7 +98,7 @@ class Execution extends Module {
                       (Fill(64, ex_inst === LHU) & mem_wdata_lhu) |  
                       (Fill(64, ex_inst === LWU) & mem_wdata_lwu)
 
-  //Access memory
+  //access memory
   val data_write_sb = MuxLookup(alu_result(2,0), 0.U, Array(
     "b000".U -> Cat(Fill(56, 0.U), ex_wmem(7,0)               ),
     "b001".U -> Cat(Fill(48, 0.U), ex_wmem(7,0), Fill( 8, 0.U)),
@@ -162,7 +159,7 @@ class Execution extends Module {
 
   val ex_wdata    = Mux(load_en, mem_wdata, Mux(ex_sysop =/= 0.U, io.csr_rdata, alu_result))
 
-  val is_mem    = load_en || store_en
+  val is_mem    = data_valid
   val load_data = RegInit(UInt(64.W), 0.U)
   val resp_success = io.dmem.data_ready
 
@@ -209,6 +206,7 @@ class Execution extends Module {
   io.out.op2      := ex_op2
   io.out.typew    := ex_typew
   io.out.wmem     := ex_wmem
+  io.out.mem_addr := io.dmem.data_addr
   io.out.opcode   := ex_opcode
   io.out.aluop    := ex_aluop
   io.out.loadop   := ex_loadop

@@ -70,7 +70,7 @@ class InstFetch extends Module {
   val if_pc   = Mux(mis || reg_mis, 0.U, pc)
   val if_inst = Mux(mis || reg_mis, 0.U, inst)
 
-  io.out.valid      := if_valid || if_stall
+  io.out.valid      := (if_valid || if_stall) && !mis && !reg_mis
   io.out.pc         := if_pc
   io.out.inst       := if_inst
   io.out.wen        := false.B
@@ -80,6 +80,7 @@ class InstFetch extends Module {
   io.out.op2        := 0.U
   io.out.typew      := false.B
   io.out.wmem       := 0.U
+  io.out.mem_addr   := 0.U
   io.out.opcode     := 0.U
   io.out.aluop      := 0.U
   io.out.loadop     := 0.U
@@ -88,5 +89,4 @@ class InstFetch extends Module {
   io.out.bp_taken   := bp.io.pred_br
   io.out.bp_targer  := bp.io.pred_pc
   
-
 }

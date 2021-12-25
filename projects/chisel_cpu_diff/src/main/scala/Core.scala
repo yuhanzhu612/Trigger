@@ -19,7 +19,7 @@ class Core extends Module {
   val writeback = Module(new WriteBack)
   val rf = Module(new RegFile)
   val csr = Module(new Csr)
-  //val clint = Module(new Clint)
+  val clint = Module(new Clint)
 
   val flush = decode.io.jmp_packet.mis
   val stall = execution.io.busy
@@ -36,14 +36,13 @@ class Core extends Module {
   decode.io.rs1_data      := rf.io.rs1_data
   decode.io.rs2_data      := rf.io.rs2_data
   decode.io.stall         := stall
-  decode.io.time_int      := false.B
   decode.io.ex_wdest      := execution.io.ex_wdest
   decode.io.ex_result     := execution.io.ex_result
   decode.io.wb_wdest      := writeback.io.wb_wdest
   decode.io.wb_result     := writeback.io.wb_result
   decode.io.mtvec         := csr.io.mtvec
   decode.io.mepc          := csr.io.mepc
-  // decode.io.time_int        := clint.io.time_int
+  decode.io.time_int      := clint.io.time_int
 
   reg_id_ex.io.in         <> decode.io.out
   reg_id_ex.io.stall      := stall
@@ -52,6 +51,7 @@ class Core extends Module {
   execution.io.dmem       <> io.dmem
   execution.io.in         := reg_id_ex.io.out
   execution.io.csr_rdata  := csr.io.csr_rdata
+  execution.io.cmp_rdata  := clint.io.cmp_rdata
 
   reg_ex_wb.io.in         <> execution.io.out
   reg_ex_wb.io.stall      := stall
@@ -70,14 +70,15 @@ class Core extends Module {
   csr.io.raddr            := execution.io.csr_raddr
   csr.io.inst             := writeback.io.inst
   csr.io.pc               := writeback.io.pc
-  csr.io.flush            := writeback.io.csr_flush
+  csr.io.exc              := writeback.io.exc
 
-  // clint.io.mstatus          := csr.io.mstatus
-  // clint.io.mie              := csr.io.mie
-  // clint.io.cmp_ren          := execution.io.cmp_ren
-  // clint.io.cmp_wen          := execution.io.cmp_wen
-  // clint.io.cmp_addr         := execution.io.cmp_addr
-  // clint.io.cmp_wdata        := execution.io.cmp_wdata
+  clint.io.mstatus        := csr.io.mstatus
+  clint.io.mie            := csr.io.mie
+  clint.io.exc            := writeback.io.exc
+  clint.io.cmp_ren        := execution.io.cmp_ren
+  clint.io.cmp_wen        := execution.io.cmp_wen
+  clint.io.cmp_addr       := execution.io.cmp_addr
+  clint.io.cmp_wdata      := execution.io.cmp_wdata
 
 
   /* ----- Difftest ------------------------------ */
@@ -85,7 +86,11 @@ class Core extends Module {
   val valid   = writeback.io.ready_cmt && !stall
   val inst_my = writeback.io.inst === MY_INST
   val op1     = writeback.io.op1
-  val skip    = inst_my || (writeback.io.inst(31, 20) === Csrs.mcycle && writeback.io.sysop =/= 0.U)
+
+  val req_clint = (writeback.io.mem_addr === CLINT_MTIMECMP || writeback.io.mem_addr === CLINT_MTIME) &&
+                  (writeback.io.loadop =/= 0.U || writeback.io.storeop =/= 0.U)
+
+  val skip    = inst_my || (writeback.io.inst(31, 20) === Csrs.mcycle && writeback.io.sysop =/= 0.U) || req_clint
 
   val print_valid = RegInit(false.B)
   val print       = RegInit(0.U(64.W))
@@ -99,11 +104,9 @@ class Core extends Module {
     printf("%c", print)
   }
 
-  // val intr = writeback.io.intr
-  // val intr_no = Mux(intr, writeback.io.intr_no, 0.U)
-  // val exceptionPC = Mux(intr, writeback.io.wb.pc, 0.U)
-  val intr_no = 0.U
-  val exceptionPC = 0.U
+  val intr = writeback.io.intr
+  val intr_no = Mux(intr, writeback.io.intr_no, 0.U)
+  val exceptionPC = Mux(intr, writeback.io.pc, 0.U)
 
   when (EnableDifftest) {
     val dt_ic = Module(new DifftestInstrCommit)
