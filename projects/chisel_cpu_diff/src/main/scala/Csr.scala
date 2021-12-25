@@ -12,6 +12,7 @@ class Csr extends Module {
     val raddr     = Input(UInt(12.W))
     val sysop     = Input(UInt(SYS_X.length.W))
     val exc       = Input(Bool())
+    val intr      = Input(Bool())
 
     val csr_rdata = Output(UInt(64.W))
     val mstatus   = Output(UInt(64.W))
@@ -54,7 +55,7 @@ class Csr extends Module {
   }
 
   //INTERRUPT
-  when (sysop === s"b$SYS_INT".U && io.exc) {
+  when (io.intr && io.exc) {
     mepc := io.pc
     mcause := "h8000000000000007".U
     mstatus := Cat(mstatus(63,13), Fill(2, 1.U), mstatus(10,8), mstatus(3), mstatus(6, 4), 0.U, mstatus(2, 0))

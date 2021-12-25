@@ -41,26 +41,27 @@ class WriteBack extends Module {
   val wb_loadop   = io.in.loadop
   val wb_storeop  = io.in.storeop
   val wb_mem_addr = io.in.mem_addr
+  val intr        = io.in.intr
 
-  io.intr := wb_sysop === s"b$SYS_INT".U
-  io.intr_no := 7.U
+  io.intr       := intr
+  io.intr_no    := 7.U
 
   io.pc         := wb_pc
   io.inst       := wb_inst
   io.op1        := wb_op1
-  io.sysop      := wb_sysop
+  io.sysop      := Mux(intr, 0.U, wb_sysop)
   io.loadop     := wb_loadop
   io.storeop    := wb_storeop
   io.mem_addr   := wb_mem_addr
 
-  io.wen        := wb_wen && !io.intr && wb_valid
+  io.wen        := wb_wen && !intr && wb_valid
   io.wdest      := wb_wdest
   io.wdata      := wb_wdata
-  io.ready_cmt  := wb_inst =/= 0.U && !io.intr && wb_valid
+  io.ready_cmt  := wb_inst =/= 0.U && !intr && wb_valid
 
-  io.exc        := (wb_sysop === s"b$SYS_ECALL".U || wb_sysop === s"b$SYS_MRET".U || wb_sysop === s"b$SYS_INT".U)
+  io.exc        := (wb_sysop === s"b$SYS_ECALL".U || wb_sysop === s"b$SYS_MRET".U || intr)
 
-  io.wb_wdest  := Mux(wb_valid, io.wdest, 0.U)
-  io.wb_result := io.wdata
+  io.wb_wdest   := Mux(wb_valid, io.wdest, 0.U)
+  io.wb_result  := io.wdata
 
 }

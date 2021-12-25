@@ -212,6 +212,7 @@ class Execution extends Module {
   io.out.loadop   := ex_loadop
   io.out.storeop  := ex_storeop
   io.out.sysop    := ex_sysop
+  io.out.intr     := io.in.intr
   io.out.bp_taken   := 0.U
   io.out.bp_targer  := 0.U
 

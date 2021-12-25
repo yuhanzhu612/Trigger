@@ -86,6 +86,7 @@ class InstFetch extends Module {
   io.out.loadop     := 0.U
   io.out.storeop    := 0.U
   io.out.sysop      := 0.U
+  io.out.intr       := false.B
   io.out.bp_taken   := bp.io.pred_br
   io.out.bp_targer  := bp.io.pred_pc
   

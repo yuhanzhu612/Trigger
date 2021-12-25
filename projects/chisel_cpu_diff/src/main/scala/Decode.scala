@@ -190,8 +190,7 @@ class Decode extends Module {
                   (Fill(SYS_X.length, csrrci) & s"b$SYS_CSRRCI".U) |
                   (Fill(SYS_X.length, csrrw ) & s"b$SYS_CSRRW".U ) |
                   (Fill(SYS_X.length, ecall ) & s"b$SYS_ECALL".U ) |
-                  (Fill(SYS_X.length, mret  ) & s"b$SYS_MRET".U  ) |
-                  (Fill(SYS_X.length, t_int ) & s"b$SYS_INT".U   )
+                  (Fill(SYS_X.length, mret  ) & s"b$SYS_MRET".U  )
   val id_op1    = MuxLookup(id_opcode, 0.U, Array(
                     s"b$TYPE_I".U -> rs1_value,
                     s"b$TYPE_U".U -> Mux(id_inst === AUIPC, id_pc, 0.U),
@@ -224,8 +223,7 @@ class Decode extends Module {
                    (Fill(REDIRECT_X.length, bltu ) & s"b$REDIRECT_BLTU".U ) |
                    (Fill(REDIRECT_X.length, bgeu ) & s"b$REDIRECT_BGEU".U ) |
                    (Fill(REDIRECT_X.length, ecall) & s"b$REDIRECT_ECALL".U) |
-                   (Fill(REDIRECT_X.length, mret ) & s"b$REDIRECT_MRET".U ) |
-                   (Fill(REDIRECT_X.length, t_int) & s"b$REDIRECT_INT".U  )
+                   (Fill(REDIRECT_X.length, mret ) & s"b$REDIRECT_MRET".U )
   ctrl.io.redirectop := redirectop
   ctrl.io.pc         := id_pc
   ctrl.io.imm_i      := imm_i
@@ -238,11 +236,11 @@ class Decode extends Module {
 
   val br_stall    = io.stall && (rs1_forward || rs2_forward) //branch target not ready
 
-  val jmp_valid   = ctrl.io.jmp
-  val jmp_pc      = ctrl.io.target
+  val jmp_valid   = ctrl.io.jmp || t_int
+  val jmp_pc      = Mux(t_int, Cat(io.mtvec(31, 2), Fill(2, 0.U)), ctrl.io.target)
   val mis_predict = Mux(jmp_valid, (id_bp_taken && (jmp_pc =/= id_bp_targer)) || !id_bp_taken, id_bp_taken) && !br_stall
 
-  io.jmp_packet.valid   := redirectop =/= 0.U
+  io.jmp_packet.valid   := redirectop =/= 0.U || t_int
   io.jmp_packet.inst_pc := id_pc
   io.jmp_packet.jmp     := jmp_valid
   io.jmp_packet.jmp_pc  := jmp_pc
@@ -268,6 +266,7 @@ class Decode extends Module {
   io.out.loadop     := id_loadop
   io.out.storeop    := id_storeop
   io.out.sysop      := id_sysop
+  io.out.intr       := t_int
   io.out.bp_taken   := 0.U
   io.out.bp_targer  := 0.U
   

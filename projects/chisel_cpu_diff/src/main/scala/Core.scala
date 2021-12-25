@@ -71,6 +71,7 @@ class Core extends Module {
   csr.io.inst             := writeback.io.inst
   csr.io.pc               := writeback.io.pc
   csr.io.exc              := writeback.io.exc
+  csr.io.intr             := writeback.io.intr
 
   clint.io.mstatus        := csr.io.mstatus
   clint.io.mie            := csr.io.mie

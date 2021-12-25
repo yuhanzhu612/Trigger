@@ -29,8 +29,7 @@ class Ctrl extends Module {
   val mepc        = io.mepc
 
   io.jmp   :=   (redirectop === s"b$REDIRECT_ECALL".U && true.B) | 
-                (redirectop === s"b$REDIRECT_MRET".U  && true.B) | 
-                (redirectop === s"b$REDIRECT_INT".U   && true.B) | 
+                (redirectop === s"b$REDIRECT_MRET".U  && true.B) |
                 (redirectop === s"b$REDIRECT_JAL".U   && true.B) | 
                 (redirectop === s"b$REDIRECT_JALR".U  && true.B) |  
                 (redirectop === s"b$REDIRECT_BEQ".U   && rs1_value === rs2_value) |  
@@ -38,12 +37,11 @@ class Ctrl extends Module {
                 (redirectop === s"b$REDIRECT_BLT".U   && rs1_value.asSInt() <  rs2_value.asSInt()) |
                 (redirectop === s"b$REDIRECT_BGE".U   && rs1_value.asSInt() >= rs2_value.asSInt()) |
                 (redirectop === s"b$REDIRECT_BLTU".U  && rs1_value.asUInt() <  rs2_value.asUInt()) |
-                (redirectop === s"b$REDIRECT_BGEU".U  && rs1_value.asUInt() >= rs2_value.asUInt())  
+                (redirectop === s"b$REDIRECT_BGEU".U  && rs1_value.asUInt() >= rs2_value.asUInt())
 
   io.target :=   MuxLookup(redirectop, 0.U, Array(
                   s"b$REDIRECT_ECALL".U -> Cat(mtvec(31, 2), Fill(2, 0.U)),
                   s"b$REDIRECT_MRET".U  -> mepc(31, 0),
-                  s"b$REDIRECT_INT".U   -> Cat(mtvec(31, 2), Fill(2, 0.U)),
                   s"b$REDIRECT_JAL".U   -> (pc + imm_j).asUInt(), 
                   s"b$REDIRECT_JALR".U  -> (rs1_value + imm_i).asUInt(),
                   s"b$REDIRECT_BEQ".U   -> (pc + imm_b).asUInt(),

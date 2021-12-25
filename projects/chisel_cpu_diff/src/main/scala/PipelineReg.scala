@@ -21,6 +21,7 @@ class BUS_R extends Bundle {
   val loadop    = UInt(LOAD_X.length.W)
   val storeop   = UInt(STORE_X.length.W)
   val sysop     = UInt(SYS_X.length.W)
+  val intr      = Bool()
 
   val bp_taken  = Bool()
   val bp_targer = UInt(32.W)
@@ -36,11 +37,13 @@ class BUS_R extends Bundle {
     op2       := 0.U
     typew     := false.B
     wmem      := 0.U
+    mem_addr  := 0.U
     opcode    := 0.U
     aluop     := 0.U
     loadop    := 0.U
     storeop   := 0.U
     sysop     := 0.U
+    intr      := false.B
     bp_taken  := false.B
     bp_targer := 0.U
   }
