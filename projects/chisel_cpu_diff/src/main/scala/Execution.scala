@@ -196,23 +196,23 @@ class Execution extends Module {
   io.busy := busy
 
   //Next
-  io.out.valid    := ex_valid
-  io.out.pc       := ex_pc
-  io.out.inst     := ex_inst
-  io.out.wen      := ex_wen
-  io.out.wdest    := ex_wdest
-  io.out.wdata    := ex_wdata
-  io.out.op1      := ex_op1
-  io.out.op2      := ex_op2
-  io.out.typew    := ex_typew
-  io.out.wmem     := ex_wmem
-  io.out.mem_addr := io.dmem.data_addr
-  io.out.opcode   := ex_opcode
-  io.out.aluop    := ex_aluop
-  io.out.loadop   := ex_loadop
-  io.out.storeop  := ex_storeop
-  io.out.sysop    := ex_sysop
-  io.out.intr     := io.in.intr
+  io.out.valid      := ex_valid
+  io.out.pc         := ex_pc
+  io.out.inst       := ex_inst
+  io.out.wen        := ex_wen
+  io.out.wdest      := ex_wdest
+  io.out.wdata      := ex_wdata
+  io.out.op1        := ex_op1
+  io.out.op2        := ex_op2
+  io.out.typew      := ex_typew
+  io.out.wmem       := ex_wmem
+  io.out.mem_addr   := io.dmem.data_addr
+  io.out.opcode     := ex_opcode
+  io.out.aluop      := ex_aluop
+  io.out.loadop     := ex_loadop
+  io.out.storeop    := ex_storeop
+  io.out.sysop      := ex_sysop
+  io.out.intr       := io.in.intr
   io.out.bp_taken   := 0.U
   io.out.bp_targer  := 0.U
 

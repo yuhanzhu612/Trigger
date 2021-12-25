@@ -40438,36 +40438,34 @@ module Core(
 );
 `ifdef RANDOMIZE_REG_INIT
   reg [31:0] _RAND_0;
-  reg [63:0] _RAND_1;
+  reg [31:0] _RAND_1;
   reg [31:0] _RAND_2;
   reg [31:0] _RAND_3;
   reg [31:0] _RAND_4;
-  reg [31:0] _RAND_5;
+  reg [63:0] _RAND_5;
   reg [31:0] _RAND_6;
-  reg [63:0] _RAND_7;
+  reg [31:0] _RAND_7;
   reg [31:0] _RAND_8;
-  reg [31:0] _RAND_9;
-  reg [31:0] _RAND_10;
-  reg [63:0] _RAND_11;
-  reg [63:0] _RAND_12;
+  reg [63:0] _RAND_9;
+  reg [63:0] _RAND_10;
 `endif // RANDOMIZE_REG_INIT
-  wire  fetch_clock; // @[Core.scala 13:21]
-  wire  fetch_reset; // @[Core.scala 13:21]
-  wire  fetch_io_imem_inst_valid; // @[Core.scala 13:21]
-  wire  fetch_io_imem_inst_ready; // @[Core.scala 13:21]
-  wire [31:0] fetch_io_imem_inst_addr; // @[Core.scala 13:21]
-  wire [31:0] fetch_io_imem_inst_read; // @[Core.scala 13:21]
-  wire  fetch_io_jmp_packet_valid; // @[Core.scala 13:21]
-  wire [31:0] fetch_io_jmp_packet_inst_pc; // @[Core.scala 13:21]
-  wire  fetch_io_jmp_packet_jmp; // @[Core.scala 13:21]
-  wire [31:0] fetch_io_jmp_packet_jmp_pc; // @[Core.scala 13:21]
-  wire  fetch_io_jmp_packet_mis; // @[Core.scala 13:21]
-  wire  fetch_io_stall; // @[Core.scala 13:21]
-  wire  fetch_io_out_valid; // @[Core.scala 13:21]
-  wire [31:0] fetch_io_out_pc; // @[Core.scala 13:21]
-  wire [31:0] fetch_io_out_inst; // @[Core.scala 13:21]
-  wire  fetch_io_out_bp_taken; // @[Core.scala 13:21]
-  wire [31:0] fetch_io_out_bp_targer; // @[Core.scala 13:21]
+  wire  fetch_clock; // @[Core.scala 13:25]
+  wire  fetch_reset; // @[Core.scala 13:25]
+  wire  fetch_io_imem_inst_valid; // @[Core.scala 13:25]
+  wire  fetch_io_imem_inst_ready; // @[Core.scala 13:25]
+  wire [31:0] fetch_io_imem_inst_addr; // @[Core.scala 13:25]
+  wire [31:0] fetch_io_imem_inst_read; // @[Core.scala 13:25]
+  wire  fetch_io_jmp_packet_valid; // @[Core.scala 13:25]
+  wire [31:0] fetch_io_jmp_packet_inst_pc; // @[Core.scala 13:25]
+  wire  fetch_io_jmp_packet_jmp; // @[Core.scala 13:25]
+  wire [31:0] fetch_io_jmp_packet_jmp_pc; // @[Core.scala 13:25]
+  wire  fetch_io_jmp_packet_mis; // @[Core.scala 13:25]
+  wire  fetch_io_stall; // @[Core.scala 13:25]
+  wire  fetch_io_out_valid; // @[Core.scala 13:25]
+  wire [31:0] fetch_io_out_pc; // @[Core.scala 13:25]
+  wire [31:0] fetch_io_out_inst; // @[Core.scala 13:25]
+  wire  fetch_io_out_bp_taken; // @[Core.scala 13:25]
+  wire [31:0] fetch_io_out_bp_targer; // @[Core.scala 13:25]
   wire  reg_if_id_clock; // @[Core.scala 14:25]
   wire  reg_if_id_reset; // @[Core.scala 14:25]
   wire  reg_if_id_io_in_valid; // @[Core.scala 14:25]
@@ -40507,42 +40505,42 @@ module Core(
   wire  reg_if_id_io_out_bp_taken; // @[Core.scala 14:25]
   wire [31:0] reg_if_id_io_out_bp_targer; // @[Core.scala 14:25]
   wire  reg_if_id_io_stall; // @[Core.scala 14:25]
-  wire [4:0] decode_io_rs1_addr; // @[Core.scala 15:22]
-  wire [4:0] decode_io_rs2_addr; // @[Core.scala 15:22]
-  wire [63:0] decode_io_rs1_data; // @[Core.scala 15:22]
-  wire [63:0] decode_io_rs2_data; // @[Core.scala 15:22]
-  wire  decode_io_in_valid; // @[Core.scala 15:22]
-  wire [31:0] decode_io_in_pc; // @[Core.scala 15:22]
-  wire [31:0] decode_io_in_inst; // @[Core.scala 15:22]
-  wire  decode_io_in_bp_taken; // @[Core.scala 15:22]
-  wire [31:0] decode_io_in_bp_targer; // @[Core.scala 15:22]
-  wire  decode_io_out_valid; // @[Core.scala 15:22]
-  wire [31:0] decode_io_out_pc; // @[Core.scala 15:22]
-  wire [31:0] decode_io_out_inst; // @[Core.scala 15:22]
-  wire  decode_io_out_wen; // @[Core.scala 15:22]
-  wire [4:0] decode_io_out_wdest; // @[Core.scala 15:22]
-  wire [63:0] decode_io_out_op1; // @[Core.scala 15:22]
-  wire [63:0] decode_io_out_op2; // @[Core.scala 15:22]
-  wire  decode_io_out_typew; // @[Core.scala 15:22]
-  wire [63:0] decode_io_out_wmem; // @[Core.scala 15:22]
-  wire [9:0] decode_io_out_aluop; // @[Core.scala 15:22]
-  wire [6:0] decode_io_out_loadop; // @[Core.scala 15:22]
-  wire [3:0] decode_io_out_storeop; // @[Core.scala 15:22]
-  wire [7:0] decode_io_out_sysop; // @[Core.scala 15:22]
-  wire  decode_io_out_intr; // @[Core.scala 15:22]
-  wire  decode_io_jmp_packet_valid; // @[Core.scala 15:22]
-  wire [31:0] decode_io_jmp_packet_inst_pc; // @[Core.scala 15:22]
-  wire  decode_io_jmp_packet_jmp; // @[Core.scala 15:22]
-  wire [31:0] decode_io_jmp_packet_jmp_pc; // @[Core.scala 15:22]
-  wire  decode_io_jmp_packet_mis; // @[Core.scala 15:22]
-  wire  decode_io_stall; // @[Core.scala 15:22]
-  wire [63:0] decode_io_mtvec; // @[Core.scala 15:22]
-  wire [63:0] decode_io_mepc; // @[Core.scala 15:22]
-  wire  decode_io_time_int; // @[Core.scala 15:22]
-  wire [4:0] decode_io_ex_wdest; // @[Core.scala 15:22]
-  wire [4:0] decode_io_wb_wdest; // @[Core.scala 15:22]
-  wire [63:0] decode_io_ex_result; // @[Core.scala 15:22]
-  wire [63:0] decode_io_wb_result; // @[Core.scala 15:22]
+  wire [4:0] decode_io_rs1_addr; // @[Core.scala 15:25]
+  wire [4:0] decode_io_rs2_addr; // @[Core.scala 15:25]
+  wire [63:0] decode_io_rs1_data; // @[Core.scala 15:25]
+  wire [63:0] decode_io_rs2_data; // @[Core.scala 15:25]
+  wire  decode_io_in_valid; // @[Core.scala 15:25]
+  wire [31:0] decode_io_in_pc; // @[Core.scala 15:25]
+  wire [31:0] decode_io_in_inst; // @[Core.scala 15:25]
+  wire  decode_io_in_bp_taken; // @[Core.scala 15:25]
+  wire [31:0] decode_io_in_bp_targer; // @[Core.scala 15:25]
+  wire  decode_io_out_valid; // @[Core.scala 15:25]
+  wire [31:0] decode_io_out_pc; // @[Core.scala 15:25]
+  wire [31:0] decode_io_out_inst; // @[Core.scala 15:25]
+  wire  decode_io_out_wen; // @[Core.scala 15:25]
+  wire [4:0] decode_io_out_wdest; // @[Core.scala 15:25]
+  wire [63:0] decode_io_out_op1; // @[Core.scala 15:25]
+  wire [63:0] decode_io_out_op2; // @[Core.scala 15:25]
+  wire  decode_io_out_typew; // @[Core.scala 15:25]
+  wire [63:0] decode_io_out_wmem; // @[Core.scala 15:25]
+  wire [9:0] decode_io_out_aluop; // @[Core.scala 15:25]
+  wire [6:0] decode_io_out_loadop; // @[Core.scala 15:25]
+  wire [3:0] decode_io_out_storeop; // @[Core.scala 15:25]
+  wire [7:0] decode_io_out_sysop; // @[Core.scala 15:25]
+  wire  decode_io_out_intr; // @[Core.scala 15:25]
+  wire  decode_io_jmp_packet_valid; // @[Core.scala 15:25]
+  wire [31:0] decode_io_jmp_packet_inst_pc; // @[Core.scala 15:25]
+  wire  decode_io_jmp_packet_jmp; // @[Core.scala 15:25]
+  wire [31:0] decode_io_jmp_packet_jmp_pc; // @[Core.scala 15:25]
+  wire  decode_io_jmp_packet_mis; // @[Core.scala 15:25]
+  wire  decode_io_stall; // @[Core.scala 15:25]
+  wire [63:0] decode_io_mtvec; // @[Core.scala 15:25]
+  wire [63:0] decode_io_mepc; // @[Core.scala 15:25]
+  wire  decode_io_time_int; // @[Core.scala 15:25]
+  wire [4:0] decode_io_ex_wdest; // @[Core.scala 15:25]
+  wire [4:0] decode_io_wb_wdest; // @[Core.scala 15:25]
+  wire [63:0] decode_io_ex_result; // @[Core.scala 15:25]
+  wire [63:0] decode_io_wb_result; // @[Core.scala 15:25]
   wire  reg_id_ex_clock; // @[Core.scala 16:25]
   wire  reg_id_ex_reset; // @[Core.scala 16:25]
   wire  reg_id_ex_io_in_valid; // @[Core.scala 16:25]
@@ -40698,91 +40696,89 @@ module Core(
   wire  writeback_io_exc; // @[Core.scala 19:25]
   wire  writeback_io_intr; // @[Core.scala 19:25]
   wire  writeback_io_ready_cmt; // @[Core.scala 19:25]
-  wire  rf_clock; // @[Core.scala 20:18]
-  wire  rf_reset; // @[Core.scala 20:18]
-  wire [4:0] rf_io_rs1_addr; // @[Core.scala 20:18]
-  wire [4:0] rf_io_rs2_addr; // @[Core.scala 20:18]
-  wire [63:0] rf_io_rs1_data; // @[Core.scala 20:18]
-  wire [63:0] rf_io_rs2_data; // @[Core.scala 20:18]
-  wire  rf_io_wen; // @[Core.scala 20:18]
-  wire [4:0] rf_io_wdest; // @[Core.scala 20:18]
-  wire [63:0] rf_io_wdata; // @[Core.scala 20:18]
-  wire [63:0] rf_rf_10; // @[Core.scala 20:18]
-  wire  csr_clock; // @[Core.scala 21:19]
-  wire  csr_reset; // @[Core.scala 21:19]
-  wire [63:0] csr_io_in1; // @[Core.scala 21:19]
-  wire [31:0] csr_io_pc; // @[Core.scala 21:19]
-  wire [31:0] csr_io_inst; // @[Core.scala 21:19]
-  wire [11:0] csr_io_raddr; // @[Core.scala 21:19]
-  wire [7:0] csr_io_sysop; // @[Core.scala 21:19]
-  wire  csr_io_exc; // @[Core.scala 21:19]
-  wire  csr_io_intr; // @[Core.scala 21:19]
-  wire [63:0] csr_io_csr_rdata; // @[Core.scala 21:19]
-  wire [63:0] csr_io_mstatus; // @[Core.scala 21:19]
-  wire [63:0] csr_io_mie; // @[Core.scala 21:19]
-  wire [63:0] csr_io_mtvec; // @[Core.scala 21:19]
-  wire [63:0] csr_io_mepc; // @[Core.scala 21:19]
-  wire  clint_clock; // @[Core.scala 22:21]
-  wire  clint_reset; // @[Core.scala 22:21]
-  wire [63:0] clint_io_mstatus; // @[Core.scala 22:21]
-  wire [63:0] clint_io_mie; // @[Core.scala 22:21]
-  wire  clint_io_exc; // @[Core.scala 22:21]
-  wire  clint_io_cmp_ren; // @[Core.scala 22:21]
-  wire  clint_io_cmp_wen; // @[Core.scala 22:21]
-  wire [63:0] clint_io_cmp_addr; // @[Core.scala 22:21]
-  wire [63:0] clint_io_cmp_wdata; // @[Core.scala 22:21]
-  wire [63:0] clint_io_cmp_rdata; // @[Core.scala 22:21]
-  wire  clint_io_time_int; // @[Core.scala 22:21]
-  wire  dt_ic_clock; // @[Core.scala 113:23]
-  wire [7:0] dt_ic_coreid; // @[Core.scala 113:23]
-  wire [7:0] dt_ic_index; // @[Core.scala 113:23]
-  wire  dt_ic_valid; // @[Core.scala 113:23]
-  wire [63:0] dt_ic_pc; // @[Core.scala 113:23]
-  wire [31:0] dt_ic_instr; // @[Core.scala 113:23]
-  wire [7:0] dt_ic_special; // @[Core.scala 113:23]
-  wire  dt_ic_skip; // @[Core.scala 113:23]
-  wire  dt_ic_isRVC; // @[Core.scala 113:23]
-  wire  dt_ic_scFailed; // @[Core.scala 113:23]
-  wire  dt_ic_wen; // @[Core.scala 113:23]
-  wire [63:0] dt_ic_wdata; // @[Core.scala 113:23]
-  wire [7:0] dt_ic_wdest; // @[Core.scala 113:23]
-  wire  dt_ae_clock; // @[Core.scala 128:23]
-  wire [7:0] dt_ae_coreid; // @[Core.scala 128:23]
-  wire [31:0] dt_ae_intrNO; // @[Core.scala 128:23]
-  wire [31:0] dt_ae_cause; // @[Core.scala 128:23]
-  wire [63:0] dt_ae_exceptionPC; // @[Core.scala 128:23]
-  wire [31:0] dt_ae_exceptionInst; // @[Core.scala 128:23]
-  wire  dt_te_clock; // @[Core.scala 144:23]
-  wire [7:0] dt_te_coreid; // @[Core.scala 144:23]
-  wire  dt_te_valid; // @[Core.scala 144:23]
-  wire [2:0] dt_te_code; // @[Core.scala 144:23]
-  wire [63:0] dt_te_pc; // @[Core.scala 144:23]
-  wire [63:0] dt_te_cycleCnt; // @[Core.scala 144:23]
-  wire [63:0] dt_te_instrCnt; // @[Core.scala 144:23]
+  wire  rf_clock; // @[Core.scala 20:25]
+  wire  rf_reset; // @[Core.scala 20:25]
+  wire [4:0] rf_io_rs1_addr; // @[Core.scala 20:25]
+  wire [4:0] rf_io_rs2_addr; // @[Core.scala 20:25]
+  wire [63:0] rf_io_rs1_data; // @[Core.scala 20:25]
+  wire [63:0] rf_io_rs2_data; // @[Core.scala 20:25]
+  wire  rf_io_wen; // @[Core.scala 20:25]
+  wire [4:0] rf_io_wdest; // @[Core.scala 20:25]
+  wire [63:0] rf_io_wdata; // @[Core.scala 20:25]
+  wire [63:0] rf_rf_10; // @[Core.scala 20:25]
+  wire  csr_clock; // @[Core.scala 21:25]
+  wire  csr_reset; // @[Core.scala 21:25]
+  wire [63:0] csr_io_in1; // @[Core.scala 21:25]
+  wire [31:0] csr_io_pc; // @[Core.scala 21:25]
+  wire [31:0] csr_io_inst; // @[Core.scala 21:25]
+  wire [11:0] csr_io_raddr; // @[Core.scala 21:25]
+  wire [7:0] csr_io_sysop; // @[Core.scala 21:25]
+  wire  csr_io_exc; // @[Core.scala 21:25]
+  wire  csr_io_intr; // @[Core.scala 21:25]
+  wire [63:0] csr_io_csr_rdata; // @[Core.scala 21:25]
+  wire [63:0] csr_io_mstatus; // @[Core.scala 21:25]
+  wire [63:0] csr_io_mie; // @[Core.scala 21:25]
+  wire [63:0] csr_io_mtvec; // @[Core.scala 21:25]
+  wire [63:0] csr_io_mepc; // @[Core.scala 21:25]
+  wire  clint_clock; // @[Core.scala 22:25]
+  wire  clint_reset; // @[Core.scala 22:25]
+  wire [63:0] clint_io_mstatus; // @[Core.scala 22:25]
+  wire [63:0] clint_io_mie; // @[Core.scala 22:25]
+  wire  clint_io_exc; // @[Core.scala 22:25]
+  wire  clint_io_cmp_ren; // @[Core.scala 22:25]
+  wire  clint_io_cmp_wen; // @[Core.scala 22:25]
+  wire [63:0] clint_io_cmp_addr; // @[Core.scala 22:25]
+  wire [63:0] clint_io_cmp_wdata; // @[Core.scala 22:25]
+  wire [63:0] clint_io_cmp_rdata; // @[Core.scala 22:25]
+  wire  clint_io_time_int; // @[Core.scala 22:25]
+  wire  dt_ic_clock; // @[Core.scala 106:23]
+  wire [7:0] dt_ic_coreid; // @[Core.scala 106:23]
+  wire [7:0] dt_ic_index; // @[Core.scala 106:23]
+  wire  dt_ic_valid; // @[Core.scala 106:23]
+  wire [63:0] dt_ic_pc; // @[Core.scala 106:23]
+  wire [31:0] dt_ic_instr; // @[Core.scala 106:23]
+  wire [7:0] dt_ic_special; // @[Core.scala 106:23]
+  wire  dt_ic_skip; // @[Core.scala 106:23]
+  wire  dt_ic_isRVC; // @[Core.scala 106:23]
+  wire  dt_ic_scFailed; // @[Core.scala 106:23]
+  wire  dt_ic_wen; // @[Core.scala 106:23]
+  wire [63:0] dt_ic_wdata; // @[Core.scala 106:23]
+  wire [7:0] dt_ic_wdest; // @[Core.scala 106:23]
+  wire  dt_ae_clock; // @[Core.scala 121:23]
+  wire [7:0] dt_ae_coreid; // @[Core.scala 121:23]
+  wire [31:0] dt_ae_intrNO; // @[Core.scala 121:23]
+  wire [31:0] dt_ae_cause; // @[Core.scala 121:23]
+  wire [63:0] dt_ae_exceptionPC; // @[Core.scala 121:23]
+  wire [31:0] dt_ae_exceptionInst; // @[Core.scala 121:23]
+  wire  dt_te_clock; // @[Core.scala 134:23]
+  wire [7:0] dt_te_coreid; // @[Core.scala 134:23]
+  wire  dt_te_valid; // @[Core.scala 134:23]
+  wire [2:0] dt_te_code; // @[Core.scala 134:23]
+  wire [63:0] dt_te_pc; // @[Core.scala 134:23]
+  wire [63:0] dt_te_cycleCnt; // @[Core.scala 134:23]
+  wire [63:0] dt_te_instrCnt; // @[Core.scala 134:23]
   wire  valid = writeback_io_ready_cmt & ~execution_io_busy; // @[Core.scala 87:40]
-  wire [31:0] _inst_my_T = writeback_io_inst; // @[Core.scala 88:35]
-  wire  inst_my = 32'h7b == _inst_my_T; // @[Core.scala 88:35]
-  wire  _req_clint_T_5 = writeback_io_loadop != 7'h0 | writeback_io_storeop != 4'h0; // @[Core.scala 92:48]
-  wire  req_clint = (writeback_io_mem_addr == 32'h2004000 | writeback_io_mem_addr == 32'h200bff8) & _req_clint_T_5; // @[Core.scala 91:103]
-  reg  print_valid; // @[Core.scala 96:28]
-  reg [63:0] print; // @[Core.scala 97:28]
-  wire  _T = valid & inst_my; // @[Core.scala 98:15]
-  reg  dt_ic_io_valid_REG; // @[Core.scala 117:33]
-  reg [31:0] dt_ic_io_pc_REG; // @[Core.scala 118:33]
-  reg [31:0] dt_ic_io_instr_REG; // @[Core.scala 119:33]
-  reg  dt_ic_io_skip_REG; // @[Core.scala 121:33]
-  reg  dt_ic_io_wen_REG; // @[Core.scala 124:33]
-  reg [63:0] dt_ic_io_wdata_REG; // @[Core.scala 125:33]
-  reg [4:0] dt_ic_io_wdest_REG; // @[Core.scala 126:33]
-  reg [31:0] dt_ae_io_intrNO_REG; // @[Core.scala 131:37]
-  reg [31:0] dt_ae_io_exceptionPC_REG; // @[Core.scala 133:37]
-  reg [63:0] cycle_cnt; // @[Core.scala 135:28]
-  reg [63:0] instr_cnt; // @[Core.scala 136:28]
-  wire [63:0] _cycle_cnt_T_1 = cycle_cnt + 64'h1; // @[Core.scala 138:28]
-  wire [63:0] _GEN_2 = {{63'd0}, valid}; // @[Core.scala 139:28]
-  wire [63:0] _instr_cnt_T_1 = instr_cnt + _GEN_2; // @[Core.scala 139:28]
+  wire [31:0] _T = writeback_io_inst; // @[Core.scala 92:27]
+  wire  _T_1 = 32'h7b == _T; // @[Core.scala 92:27]
+  wire  _T_2 = 32'h7b == _T & valid; // @[Core.scala 92:39]
+  wire  _req_clint_T_5 = writeback_io_loadop != 7'h0 | writeback_io_storeop != 4'h0; // @[Core.scala 97:48]
+  wire  req_clint = (writeback_io_mem_addr == 32'h2004000 | writeback_io_mem_addr == 32'h200bff8) & _req_clint_T_5; // @[Core.scala 96:103]
+  reg  dt_ic_io_valid_REG; // @[Core.scala 110:33]
+  reg [31:0] dt_ic_io_pc_REG; // @[Core.scala 111:33]
+  reg [31:0] dt_ic_io_instr_REG; // @[Core.scala 112:33]
+  reg  dt_ic_io_skip_REG; // @[Core.scala 114:33]
+  reg  dt_ic_io_wen_REG; // @[Core.scala 117:33]
+  reg [63:0] dt_ic_io_wdata_REG; // @[Core.scala 118:33]
+  reg [4:0] dt_ic_io_wdest_REG; // @[Core.scala 119:33]
+  reg [31:0] dt_ae_io_intrNO_REG; // @[Core.scala 124:37]
+  reg [31:0] dt_ae_io_exceptionPC_REG; // @[Core.scala 126:37]
+  reg [63:0] cycle_cnt; // @[Core.scala 128:28]
+  reg [63:0] instr_cnt; // @[Core.scala 129:28]
+  wire [63:0] _cycle_cnt_T_1 = cycle_cnt + 64'h1; // @[Core.scala 131:28]
+  wire [63:0] _GEN_0 = {{63'd0}, valid}; // @[Core.scala 132:28]
+  wire [63:0] _instr_cnt_T_1 = instr_cnt + _GEN_0; // @[Core.scala 132:28]
   wire [63:0] rf_a0_0 = rf_rf_10;
-  InstFetch fetch ( // @[Core.scala 13:21]
+  InstFetch fetch ( // @[Core.scala 13:25]
     .clock(fetch_clock),
     .reset(fetch_reset),
     .io_imem_inst_valid(fetch_io_imem_inst_valid),
@@ -40842,7 +40838,7 @@ module Core(
     .io_out_bp_targer(reg_if_id_io_out_bp_targer),
     .io_stall(reg_if_id_io_stall)
   );
-  Decode decode ( // @[Core.scala 15:22]
+  Decode decode ( // @[Core.scala 15:25]
     .io_rs1_addr(decode_io_rs1_addr),
     .io_rs2_addr(decode_io_rs2_addr),
     .io_rs1_data(decode_io_rs1_data),
@@ -41043,7 +41039,7 @@ module Core(
     .io_intr(writeback_io_intr),
     .io_ready_cmt(writeback_io_ready_cmt)
   );
-  RegFile rf ( // @[Core.scala 20:18]
+  RegFile rf ( // @[Core.scala 20:25]
     .clock(rf_clock),
     .reset(rf_reset),
     .io_rs1_addr(rf_io_rs1_addr),
@@ -41055,7 +41051,7 @@ module Core(
     .io_wdata(rf_io_wdata),
     .rf_10(rf_rf_10)
   );
-  Csr csr ( // @[Core.scala 21:19]
+  Csr csr ( // @[Core.scala 21:25]
     .clock(csr_clock),
     .reset(csr_reset),
     .io_in1(csr_io_in1),
@@ -41071,7 +41067,7 @@ module Core(
     .io_mtvec(csr_io_mtvec),
     .io_mepc(csr_io_mepc)
   );
-  Clint clint ( // @[Core.scala 22:21]
+  Clint clint ( // @[Core.scala 22:25]
     .clock(clint_clock),
     .reset(clint_reset),
     .io_mstatus(clint_io_mstatus),
@@ -41084,7 +41080,7 @@ module Core(
     .io_cmp_rdata(clint_io_cmp_rdata),
     .io_time_int(clint_io_time_int)
   );
-  DifftestInstrCommit dt_ic ( // @[Core.scala 113:23]
+  DifftestInstrCommit dt_ic ( // @[Core.scala 106:23]
     .clock(dt_ic_clock),
     .coreid(dt_ic_coreid),
     .index(dt_ic_index),
@@ -41099,7 +41095,7 @@ module Core(
     .wdata(dt_ic_wdata),
     .wdest(dt_ic_wdest)
   );
-  DifftestArchEvent dt_ae ( // @[Core.scala 128:23]
+  DifftestArchEvent dt_ae ( // @[Core.scala 121:23]
     .clock(dt_ae_clock),
     .coreid(dt_ae_coreid),
     .intrNO(dt_ae_intrNO),
@@ -41107,7 +41103,7 @@ module Core(
     .exceptionPC(dt_ae_exceptionPC),
     .exceptionInst(dt_ae_exceptionInst)
   );
-  DifftestTrapEvent dt_te ( // @[Core.scala 144:23]
+  DifftestTrapEvent dt_te ( // @[Core.scala 134:23]
     .clock(dt_te_clock),
     .coreid(dt_te_coreid),
     .valid(dt_te_valid),
@@ -41269,76 +41265,66 @@ module Core(
   assign clint_io_cmp_wen = execution_io_cmp_wen; // @[Core.scala 80:27]
   assign clint_io_cmp_addr = execution_io_cmp_addr; // @[Core.scala 81:27]
   assign clint_io_cmp_wdata = execution_io_cmp_wdata; // @[Core.scala 82:27]
-  assign dt_ic_clock = clock; // @[Core.scala 114:23]
-  assign dt_ic_coreid = 8'h0; // @[Core.scala 115:23]
-  assign dt_ic_index = 8'h0; // @[Core.scala 116:23]
-  assign dt_ic_valid = dt_ic_io_valid_REG; // @[Core.scala 117:23]
-  assign dt_ic_pc = {{32'd0}, dt_ic_io_pc_REG}; // @[Core.scala 118:23]
-  assign dt_ic_instr = dt_ic_io_instr_REG; // @[Core.scala 119:23]
-  assign dt_ic_special = 8'h0; // @[Core.scala 120:23]
-  assign dt_ic_skip = dt_ic_io_skip_REG; // @[Core.scala 121:23]
-  assign dt_ic_isRVC = 1'h0; // @[Core.scala 122:23]
-  assign dt_ic_scFailed = 1'h0; // @[Core.scala 123:23]
-  assign dt_ic_wen = dt_ic_io_wen_REG; // @[Core.scala 124:23]
-  assign dt_ic_wdata = dt_ic_io_wdata_REG; // @[Core.scala 125:23]
-  assign dt_ic_wdest = {{3'd0}, dt_ic_io_wdest_REG}; // @[Core.scala 126:23]
-  assign dt_ae_clock = clock; // @[Core.scala 129:27]
-  assign dt_ae_coreid = 8'h0; // @[Core.scala 130:27]
-  assign dt_ae_intrNO = dt_ae_io_intrNO_REG; // @[Core.scala 131:27]
-  assign dt_ae_cause = 32'h0; // @[Core.scala 132:27]
-  assign dt_ae_exceptionPC = {{32'd0}, dt_ae_io_exceptionPC_REG}; // @[Core.scala 133:27]
+  assign dt_ic_clock = clock; // @[Core.scala 107:23]
+  assign dt_ic_coreid = 8'h0; // @[Core.scala 108:23]
+  assign dt_ic_index = 8'h0; // @[Core.scala 109:23]
+  assign dt_ic_valid = dt_ic_io_valid_REG; // @[Core.scala 110:23]
+  assign dt_ic_pc = {{32'd0}, dt_ic_io_pc_REG}; // @[Core.scala 111:23]
+  assign dt_ic_instr = dt_ic_io_instr_REG; // @[Core.scala 112:23]
+  assign dt_ic_special = 8'h0; // @[Core.scala 113:23]
+  assign dt_ic_skip = dt_ic_io_skip_REG; // @[Core.scala 114:23]
+  assign dt_ic_isRVC = 1'h0; // @[Core.scala 115:23]
+  assign dt_ic_scFailed = 1'h0; // @[Core.scala 116:23]
+  assign dt_ic_wen = dt_ic_io_wen_REG; // @[Core.scala 117:23]
+  assign dt_ic_wdata = dt_ic_io_wdata_REG; // @[Core.scala 118:23]
+  assign dt_ic_wdest = {{3'd0}, dt_ic_io_wdest_REG}; // @[Core.scala 119:23]
+  assign dt_ae_clock = clock; // @[Core.scala 122:27]
+  assign dt_ae_coreid = 8'h0; // @[Core.scala 123:27]
+  assign dt_ae_intrNO = dt_ae_io_intrNO_REG; // @[Core.scala 124:27]
+  assign dt_ae_cause = 32'h0; // @[Core.scala 125:27]
+  assign dt_ae_exceptionPC = {{32'd0}, dt_ae_io_exceptionPC_REG}; // @[Core.scala 126:27]
   assign dt_ae_exceptionInst = 32'h0;
-  assign dt_te_clock = clock; // @[Core.scala 145:23]
-  assign dt_te_coreid = 8'h0; // @[Core.scala 146:23]
-  assign dt_te_valid = writeback_io_inst == 32'h6b; // @[Core.scala 147:45]
-  assign dt_te_code = rf_a0_0[2:0]; // @[Core.scala 148:31]
-  assign dt_te_pc = {{32'd0}, writeback_io_pc}; // @[Core.scala 149:23]
-  assign dt_te_cycleCnt = cycle_cnt; // @[Core.scala 150:23]
-  assign dt_te_instrCnt = instr_cnt; // @[Core.scala 151:23]
+  assign dt_te_clock = clock; // @[Core.scala 135:23]
+  assign dt_te_coreid = 8'h0; // @[Core.scala 136:23]
+  assign dt_te_valid = writeback_io_inst == 32'h6b; // @[Core.scala 137:45]
+  assign dt_te_code = rf_a0_0[2:0]; // @[Core.scala 138:31]
+  assign dt_te_pc = {{32'd0}, writeback_io_pc}; // @[Core.scala 139:23]
+  assign dt_te_cycleCnt = cycle_cnt; // @[Core.scala 140:23]
+  assign dt_te_instrCnt = instr_cnt; // @[Core.scala 141:23]
   always @(posedge clock) begin
-    if (reset) begin // @[Core.scala 96:28]
-      print_valid <= 1'h0; // @[Core.scala 96:28]
-    end else begin
-      print_valid <= _T;
-    end
-    if (reset) begin // @[Core.scala 97:28]
-      print <= 64'h0; // @[Core.scala 97:28]
-    end else if (valid & inst_my) begin // @[Core.scala 98:27]
-      print <= writeback_io_op1; // @[Core.scala 100:11]
-    end
     dt_ic_io_valid_REG <= writeback_io_ready_cmt & ~execution_io_busy; // @[Core.scala 87:40]
-    dt_ic_io_pc_REG <= writeback_io_pc; // @[Core.scala 118:33]
-    dt_ic_io_instr_REG <= writeback_io_inst; // @[Core.scala 119:33]
-    dt_ic_io_skip_REG <= inst_my | writeback_io_inst[31:20] == 12'hb00 & writeback_io_sysop != 8'h0 | req_clint; // @[Core.scala 94:102]
-    dt_ic_io_wen_REG <= writeback_io_wen; // @[Core.scala 124:33]
-    dt_ic_io_wdata_REG <= writeback_io_wdata; // @[Core.scala 125:33]
-    dt_ic_io_wdest_REG <= writeback_io_wdest; // @[Core.scala 126:33]
-    if (writeback_io_intr) begin // @[Core.scala 109:20]
+    dt_ic_io_pc_REG <= writeback_io_pc; // @[Core.scala 111:33]
+    dt_ic_io_instr_REG <= writeback_io_inst; // @[Core.scala 112:33]
+    dt_ic_io_skip_REG <= _T_1 | writeback_io_inst[31:20] == 12'hb00 & writeback_io_sysop != 8'h0 | req_clint; // @[Core.scala 99:126]
+    dt_ic_io_wen_REG <= writeback_io_wen; // @[Core.scala 117:33]
+    dt_ic_io_wdata_REG <= writeback_io_wdata; // @[Core.scala 118:33]
+    dt_ic_io_wdest_REG <= writeback_io_wdest; // @[Core.scala 119:33]
+    if (writeback_io_intr) begin // @[Core.scala 102:24]
       dt_ae_io_intrNO_REG <= 32'h7;
     end else begin
       dt_ae_io_intrNO_REG <= 32'h0;
     end
-    if (writeback_io_intr) begin // @[Core.scala 110:24]
+    if (writeback_io_intr) begin // @[Core.scala 103:24]
       dt_ae_io_exceptionPC_REG <= writeback_io_pc;
     end else begin
       dt_ae_io_exceptionPC_REG <= 32'h0;
     end
-    if (reset) begin // @[Core.scala 135:28]
-      cycle_cnt <= 64'h0; // @[Core.scala 135:28]
+    if (reset) begin // @[Core.scala 128:28]
+      cycle_cnt <= 64'h0; // @[Core.scala 128:28]
     end else begin
-      cycle_cnt <= _cycle_cnt_T_1; // @[Core.scala 138:15]
+      cycle_cnt <= _cycle_cnt_T_1; // @[Core.scala 131:15]
     end
-    if (reset) begin // @[Core.scala 136:28]
-      instr_cnt <= 64'h0; // @[Core.scala 136:28]
+    if (reset) begin // @[Core.scala 129:28]
+      instr_cnt <= 64'h0; // @[Core.scala 129:28]
     end else begin
-      instr_cnt <= _instr_cnt_T_1; // @[Core.scala 139:15]
+      instr_cnt <= _instr_cnt_T_1; // @[Core.scala 132:15]
     end
     `ifndef SYNTHESIS
     `ifdef PRINTF_COND
       if (`PRINTF_COND) begin
     `endif
-        if (print_valid & ~reset) begin
-          $fwrite(32'h80000002,"%c",print); // @[Core.scala 105:11]
+        if (_T_2 & ~reset) begin
+          $fwrite(32'h80000002,"%c",rf_a0_0); // @[Core.scala 93:11]
         end
     `ifdef PRINTF_COND
       end
@@ -41382,31 +41368,27 @@ initial begin
     `endif
 `ifdef RANDOMIZE_REG_INIT
   _RAND_0 = {1{`RANDOM}};
-  print_valid = _RAND_0[0:0];
-  _RAND_1 = {2{`RANDOM}};
-  print = _RAND_1[63:0];
+  dt_ic_io_valid_REG = _RAND_0[0:0];
+  _RAND_1 = {1{`RANDOM}};
+  dt_ic_io_pc_REG = _RAND_1[31:0];
   _RAND_2 = {1{`RANDOM}};
-  dt_ic_io_valid_REG = _RAND_2[0:0];
+  dt_ic_io_instr_REG = _RAND_2[31:0];
   _RAND_3 = {1{`RANDOM}};
-  dt_ic_io_pc_REG = _RAND_3[31:0];
+  dt_ic_io_skip_REG = _RAND_3[0:0];
   _RAND_4 = {1{`RANDOM}};
-  dt_ic_io_instr_REG = _RAND_4[31:0];
-  _RAND_5 = {1{`RANDOM}};
-  dt_ic_io_skip_REG = _RAND_5[0:0];
+  dt_ic_io_wen_REG = _RAND_4[0:0];
+  _RAND_5 = {2{`RANDOM}};
+  dt_ic_io_wdata_REG = _RAND_5[63:0];
   _RAND_6 = {1{`RANDOM}};
-  dt_ic_io_wen_REG = _RAND_6[0:0];
-  _RAND_7 = {2{`RANDOM}};
-  dt_ic_io_wdata_REG = _RAND_7[63:0];
+  dt_ic_io_wdest_REG = _RAND_6[4:0];
+  _RAND_7 = {1{`RANDOM}};
+  dt_ae_io_intrNO_REG = _RAND_7[31:0];
   _RAND_8 = {1{`RANDOM}};
-  dt_ic_io_wdest_REG = _RAND_8[4:0];
-  _RAND_9 = {1{`RANDOM}};
-  dt_ae_io_intrNO_REG = _RAND_9[31:0];
-  _RAND_10 = {1{`RANDOM}};
-  dt_ae_io_exceptionPC_REG = _RAND_10[31:0];
-  _RAND_11 = {2{`RANDOM}};
-  cycle_cnt = _RAND_11[63:0];
-  _RAND_12 = {2{`RANDOM}};
-  instr_cnt = _RAND_12[63:0];
+  dt_ae_io_exceptionPC_REG = _RAND_8[31:0];
+  _RAND_9 = {2{`RANDOM}};
+  cycle_cnt = _RAND_9[63:0];
+  _RAND_10 = {2{`RANDOM}};
+  instr_cnt = _RAND_10[63:0];
 `endif // RANDOMIZE_REG_INIT
   `endif // RANDOMIZE
 end // initial

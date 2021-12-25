@@ -29,7 +29,7 @@ class WriteBack extends Module {
   val ready_cmt = Output(Bool())
   })
 
-  val wb_valid = io.in.valid
+  val wb_valid    = io.in.valid
   val wb_pc       = io.in.pc
   val wb_inst     = io.in.inst
   val wb_wen      = io.in.wen

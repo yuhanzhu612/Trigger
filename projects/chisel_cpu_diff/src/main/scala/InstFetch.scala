@@ -70,6 +70,7 @@ class InstFetch extends Module {
   val if_pc   = Mux(mis || reg_mis, 0.U, pc)
   val if_inst = Mux(mis || reg_mis, 0.U, inst)
 
+  //Next
   io.out.valid      := (if_valid || if_stall) && !mis && !reg_mis
   io.out.pc         := if_pc
   io.out.inst       := if_inst

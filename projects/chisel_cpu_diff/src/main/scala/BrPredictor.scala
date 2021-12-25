@@ -14,7 +14,7 @@ class BrPredictorIO extends Bundle {
   val pc = Input(UInt(32.W))
   val inst = Input(UInt(32.W))
   val is_br = Input(Bool())
-  // from EX stage
+  // from ID stage
   val jmp_packet = Input(new JmpPacket)
   // prediction result
   val pred_br = Output(Bool())

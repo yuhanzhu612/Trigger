@@ -10,19 +10,19 @@ class Core extends Module {
     val dmem = new CoreData
   })
 
-  val fetch = Module(new InstFetch)
+  val fetch     = Module(new InstFetch)
   val reg_if_id = Module(new PipelineReg)
-  val decode = Module(new Decode)
+  val decode    = Module(new Decode)
   val reg_id_ex = Module(new PipelineReg)
   val execution = Module(new Execution)
   val reg_ex_wb = Module(new PipelineReg)
   val writeback = Module(new WriteBack)
-  val rf = Module(new RegFile)
-  val csr = Module(new Csr)
-  val clint = Module(new Clint)
+  val rf        = Module(new RegFile)
+  val csr       = Module(new Csr)
+  val clint     = Module(new Clint)
 
-  val flush = decode.io.jmp_packet.mis
-  val stall = execution.io.busy
+  val flush     = decode.io.jmp_packet.mis
+  val stall     = execution.io.busy
 
   fetch.io.imem           <> io.imem
   fetch.io.jmp_packet     <> decode.io.jmp_packet
@@ -85,28 +85,21 @@ class Core extends Module {
   /* ----- Difftest ------------------------------ */
 
   val valid   = writeback.io.ready_cmt && !stall
-  val inst_my = writeback.io.inst === MY_INST
-  val op1     = writeback.io.op1
 
-  val req_clint = (writeback.io.mem_addr === CLINT_MTIMECMP || writeback.io.mem_addr === CLINT_MTIME) &&
+  val rf_a0 = WireInit(0.U(64.W))
+  BoringUtils.addSink(rf_a0, "rf_a0")
+
+  when (writeback.io.inst === MY_INST && valid) {
+    printf("%c", rf_a0)
+  }
+
+  val req_clint   = (writeback.io.mem_addr === CLINT_MTIMECMP || writeback.io.mem_addr === CLINT_MTIME) &&
                   (writeback.io.loadop =/= 0.U || writeback.io.storeop =/= 0.U)
 
-  val skip    = inst_my || (writeback.io.inst(31, 20) === Csrs.mcycle && writeback.io.sysop =/= 0.U) || req_clint
+  val skip        = writeback.io.inst === MY_INST || (writeback.io.inst(31, 20) === Csrs.mcycle && writeback.io.sysop =/= 0.U) || req_clint
 
-  val print_valid = RegInit(false.B)
-  val print       = RegInit(0.U(64.W))
-  when (valid && inst_my) {
-    print_valid := true.B
-    print := op1
-  } .otherwise {
-    print_valid := false.B
-  }
-  when (print_valid) {
-    printf("%c", print)
-  }
-
-  val intr = writeback.io.intr
-  val intr_no = Mux(intr, writeback.io.intr_no, 0.U)
+  val intr        = writeback.io.intr
+  val intr_no     = Mux(intr, writeback.io.intr_no, 0.U)
   val exceptionPC = Mux(intr, writeback.io.pc, 0.U)
 
   when (EnableDifftest) {
@@ -137,9 +130,6 @@ class Core extends Module {
 
     cycle_cnt := cycle_cnt + 1.U
     instr_cnt := instr_cnt + valid
-
-    val rf_a0 = WireInit(0.U(64.W))
-    BoringUtils.addSink(rf_a0, "rf_a0")
 
     val dt_te = Module(new DifftestTrapEvent)
     dt_te.io.clock    := clock
