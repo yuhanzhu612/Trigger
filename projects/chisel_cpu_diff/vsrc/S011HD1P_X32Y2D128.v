@@ -17,7 +17,8 @@ always @(posedge CLK) begin
     if(WEN) begin
         ram[A] <= D;
     end
-    Q <= CEN ? ram[A] : {4{$random}};
 end
+
+assign Q = CEN ? ram[A] : {4{$random}};
 
 endmodule

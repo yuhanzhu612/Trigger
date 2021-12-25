@@ -2,33 +2,32 @@ import chisel3._
 import chisel3.util._
 
 trait Constant {
-  val ALU_X     = "??_????_????"
-  val ALU_ADD   = "00_0000_0001"
-  val ALU_SUB   = "00_0000_0010"
-  val ALU_SLT   = "00_0000_0100"
-  val ALU_SLTU  = "00_0000_1000"
-  val ALU_XOR   = "00_0001_0000"
-  val ALU_OR    = "00_0010_0000"
-  val ALU_AND   = "00_0100_0000"
-  val ALU_SLL   = "00_1000_0000"
-  val ALU_SRL   = "01_0000_0000"
-  val ALU_SRA   = "10_0000_0000"
+  val ALU_X     = "??????????"
+  val ALU_ADD   = "0000000001"
+  val ALU_SUB   = "0000000010"
+  val ALU_SLT   = "0000000100"
+  val ALU_SLTU  = "0000001000"
+  val ALU_XOR   = "0000010000"
+  val ALU_OR    = "0000100000"
+  val ALU_AND   = "0001000000"
+  val ALU_SLL   = "0010000000"
+  val ALU_SRL   = "0100000000"
+  val ALU_SRA   = "1000000000"
 
   val SIZE_B  = "b00".U
   val SIZE_H  = "b01".U
   val SIZE_W  = "b10".U
   val SIZE_D  = "b11".U
 
-  val SYS_X      = "????"
-  val SYS_CSRRW  = "0001"
-  val SYS_CSRRS  = "0010"
-  val SYS_CSRRC  = "0011"
-  val SYS_CSRRSI = "1000"
-  val SYS_CSRRCI = "1001"
-  val SYS_ECALL  = "0100"
-  val SYS_MRET   = "0101"
-  val SYS_FENCE  = "0110"
-  val SYS_INT    = "0111"
+  val SYS_X      = "????????"
+  val SYS_CSRRW  = "00000001"
+  val SYS_CSRRS  = "00000010"
+  val SYS_CSRRC  = "00000100"
+  val SYS_CSRRSI = "00001000"
+  val SYS_CSRRCI = "00010000"
+  val SYS_ECALL  = "00100000"
+  val SYS_MRET   = "01000000"
+  val SYS_FENCE  = "10000000"
 
   val LOAD_X   = "???????"
   val LOAD_LB  = "0000001"
@@ -53,6 +52,18 @@ trait Constant {
   val TYPE_J    = "000010"
   val TYPE_B    = "000001"
 
+  val REDIRECT_X      = "??????????"
+  val REDIRECT_BEQ    = "1000000000"
+  val REDIRECT_BNE    = "0100000000"
+  val REDIRECT_BLT    = "0010000000"
+  val REDIRECT_BGE    = "0001000000"
+  val REDIRECT_BLTU   = "0000100000"
+  val REDIRECT_BGEU   = "0000010000"
+  val REDIRECT_JAL    = "0000001000"
+  val REDIRECT_JALR   = "0000000100"
+  val REDIRECT_ECALL  = "0000000010"
+  val REDIRECT_MRET   = "0000000001"
+
   val REQ_READ  = 0.U
   val REQ_WRITE = 1.U
 
@@ -62,6 +73,7 @@ trait Constant {
   val CLINT_MTIME     = "h000000000200bff8".U
 
   val EnableDifftest  = true.B
+  val EnableCSR       = true.B
   val EnableIcache    = true.B
   val EnableDcache    = true.B
 }

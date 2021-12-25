@@ -5,144 +5,90 @@ import Constant._
 class InstFetch extends Module {
   val io = IO(new Bundle {
     val imem = new CoreInst
-    val fe   = new BUS_R
 
-    val br_valid = Input(Bool())
-    val br_taken = Input(Bool())
-    val br_target = Input(UInt(32.W))
+    val jmp_packet = Input(new JmpPacket)
 
-    val csr_jmp = Input(Bool())
-    val newpc   = Input(UInt(32.W))
-
-    val instr_valid = Output(Bool())
-
-    val jmp_packet = Input(new JumpIO)
-
-    val flush = Input(Bool())
-    val predict_taken = Output(Bool())
-    val predict_target = Output(UInt(32.W))
-
-    val if_valid_out = Output(Bool())
-    val if_allow_out = Input(Bool())
+    val stall = Input(Bool())
+    val out  = Output(new BUS_R)
   })
 
-  val bp = Module(new Brpu)
-  val mispredict = io.jmp_packet.mispredict
+  val stall = io.stall
 
-  val preif_valid     = WireInit(true.B)
-  val preif_ready_go  = WireInit(false.B)
-  val preif_valid_out = WireInit(false.B)
-  val preif_allow_out = WireInit(false.B)
+  val pc_init = "h7ffffffc".U(32.W)
+  val pc = RegInit(pc_init)
+  val inst = RegInit(0.U(32.W))
+  val bp = Module(new BrPredictor)
+  val bp_pred_pc = bp.io.pred_pc
 
-  val if_valid_in = RegInit(true.B)
-  val if_valid    = WireInit(false.B)
-  val if_ready_go = WireInit(false.B)
-  val if_allow_in = WireInit(false.B)
-
-  val abandon       = RegInit(false.B)
-  val wait_valid    = RegInit(false.B)
-  val wait_pc       = RegInit(0.U(32.W))
-  val branch_valid  = io.br_taken && io.br_valid
-
-  val flush_wait = RegInit(false.B)
-  val csr_jmp_wait = RegInit(false.B)
-  val csr_jmp_wait_pc = RegInit(0.U(32.W))
-  val csr_jmp = io.csr_jmp || csr_jmp_wait || flush_wait
-  val csr_newpc = Mux(io.csr_jmp, io.newpc, csr_jmp_wait_pc)
-
-  val hands_done    = io.imem.inst_ready && io.imem.inst_valid
-  val predict_done  = bp.io.pred_br && bp.io.branch
-
-  // preif_ready_go  := preif_valid && (hands_done || bp.io.pred_br) && !wait_valid && !csr_jmp_wait
-  preif_ready_go  := preif_valid && (hands_done || predict_done) && !csr_jmp_wait
-  preif_valid_out := preif_ready_go
-  preif_allow_out := if_allow_in
-
-  if_valid        := if_valid_in
-  // if_ready_go     := if_valid && !wait_valid
-  if_ready_go     := if_valid
-  io.if_valid_out := if_ready_go
-  if_allow_in     := !if_valid || io.if_valid_out && io.if_allow_out
-  when (if_allow_in){
-    if_valid_in := preif_valid_out
+  val mis = io.jmp_packet.mis                     // branch mis-predict
+  val reg_mis = RegInit(false.B)
+  val mis_pc  = RegInit(0.U(32.W))
+  when (mis) {
+    reg_mis := true.B
+    mis_pc  := Mux(io.jmp_packet.jmp, io.jmp_packet.jmp_pc, io.jmp_packet.inst_pc + 4.U)
+  } .elsewhen (io.imem.inst_ready && !mis) {
+    reg_mis := false.B
+    mis_pc  := 0.U
   }
 
-  when (io.csr_jmp) {
-    csr_jmp_wait := true.B
-    csr_jmp_wait_pc := io.newpc
-  }
-  .elsewhen (io.imem.inst_ready){
-    csr_jmp_wait := false.B
-  }
+  val npc = Mux(reg_mis, mis_pc, bp_pred_pc)
 
-  when (csr_jmp_wait) {
-    flush_wait := true.B
-  }
-  .elsewhen (io.imem.inst_ready){
-    flush_wait := false.B
-  }
-
-  // when (branch_valid) {
-  //   wait_valid := true.B
-  //   wait_pc := io.br_target
-  // }
-  // .elsewhen (io.imem.inst_ready){
-  //   wait_valid := false.B
-  // }
-
-  when (mispredict) {
-    wait_valid := true.B
-    wait_pc := bp.io.pred_pc
-  }
-  .elsewhen (io.imem.inst_ready){
-    wait_valid := false.B
-  }
-
-  when (wait_valid) {
-    abandon := true.B
-  }
-  .elsewhen (io.imem.inst_ready){
-    abandon := false.B
-  }
-
-  val predict_pc = RegInit(0.U(32.W))
-
-  val reset_valid = RegInit(true.B) // todo: fix pc reset
-  reset_valid := false.B
-
-  val if_pc = RegInit("h7ffffffc".U(32.W))
-  val if_inst = RegInit(0.U(32.W))
-  val next_pc = Mux(csr_jmp, csr_newpc, Mux(reset_valid, if_pc + 4.U, Mux(wait_valid, wait_pc, bp.io.pred_pc)))
-  //val next_pc = Mux(csr_jmp, csr_newpc, Mux(branch_valid, io.br_target, Mux(wait_valid || abandon, wait_pc, if_pc + 4.U)))
-
-  predict_pc  := if_pc
-  bp.io.pc    := predict_pc
-  bp.io.inst  := if_inst
-  bp.io.branch := (if_inst === Instructions.JAL) || (if_inst === Instructions.JALR) ||
-                  (if_inst === Instructions.BEQ) || (if_inst === Instructions.BNE)  ||
-                  (if_inst === Instructions.BLT) || (if_inst === Instructions.BLTU) ||
-                  (if_inst === Instructions.BGE) || (if_inst === Instructions.BGEU);
-  bp.io.jmp_packet <> io.jmp_packet
-  io.predict_taken := predict_done
-  io.predict_target := bp.io.pred_pc
-
-  when (if_allow_in && preif_valid_out) {
-    if_pc   := Mux(io.flush, 0.U, next_pc)
-    if_inst := Mux(io.flush, 0.U, io.imem.inst_read)
-  }
-
-  io.imem.inst_valid := preif_valid && preif_allow_out
+  io.imem.inst_valid := !stall
   io.imem.inst_req   := false.B
-  io.imem.inst_addr  := next_pc
+  io.imem.inst_addr  := npc.asUInt()
   io.imem.inst_size  := SIZE_W
 
-  io.fe.pc    := Mux(io.flush || mispredict || wait_valid, 0.U, if_pc)
-  io.fe.inst  := Mux(io.flush || mispredict || wait_valid, 0.U, if_inst)
-  io.fe.wen   := false.B
-  io.fe.wdest := 0.U
-  io.fe.wdata := 0.U
-  io.fe.op1   := 0.U
-  io.fe.op2   := 0.U
-  io.instr_valid := Mux(io.flush, false.B, true.B)
+  //branch prediction
+  bp.io.pc := pc
+  bp.io.inst := inst
+  bp.io.is_br := (inst === Instructions.JAL) || (inst === Instructions.JALR) ||
+                 (inst === Instructions.BEQ) || (inst === Instructions.BNE ) ||
+                 (inst === Instructions.BLT) || (inst === Instructions.BLTU) ||
+                 (inst === Instructions.BGE) || (inst === Instructions.BGEU);
+  bp.io.jmp_packet <> io.jmp_packet
 
+  val pc_update  = io.imem.inst_ready
+  when (pc_update && !stall) {
+    pc    := npc
+    inst  := io.imem.inst_read
+  }
+
+
+  val if_stall = RegInit(false.B)
+  val if_valid = RegInit(false.B)
+  when (if_valid && stall) {
+    if_stall := true.B
+  }.elsewhen (!stall) {
+    if_stall := false.B
+  }
+  when (pc_update && !stall) {
+    if_valid := true.B
+  }.otherwise {
+    if_valid := false.B
+  }
+
+  val if_pc   = Mux(mis || reg_mis, 0.U, pc)
+  val if_inst = Mux(mis || reg_mis, 0.U, inst)
+
+  //Next
+  io.out.valid      := (if_valid || if_stall) && !mis && !reg_mis
+  io.out.pc         := if_pc
+  io.out.inst       := if_inst
+  io.out.wen        := false.B
+  io.out.wdest      := 0.U
+  io.out.wdata      := 0.U
+  io.out.op1        := 0.U
+  io.out.op2        := 0.U
+  io.out.typew      := false.B
+  io.out.wmem       := 0.U
+  io.out.mem_addr   := 0.U
+  io.out.opcode     := 0.U
+  io.out.aluop      := 0.U
+  io.out.loadop     := 0.U
+  io.out.storeop    := 0.U
+  io.out.sysop      := 0.U
+  io.out.intr       := false.B
+  io.out.bp_taken   := bp.io.pred_br
+  io.out.bp_targer  := bp.io.pred_pc
+  
 }

@@ -1,4 +1,4 @@
-# Trigger
+# Run
 
 Trigger是一个4级流水线顺序单发射处理器核，兼容RVI64，可成功起rt-thread.
 代码存放在[这里](https://github.com/yuhanzhu612/Trigger/tree/super_scalar/projects/chisel_cpu_diff/src/main/scala)

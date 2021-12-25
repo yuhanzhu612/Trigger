@@ -23,9 +23,6 @@ class SimTop extends Module {
   core.io.dmem  <> dcache.io.dmem
   dcache.io.out <> top.io.dmem
 
-  icache.io.br_stall    := core.io.br_stall
-
-
 // CORE <> TOP
  // top.io.dmem <> core.io.dmem
 
