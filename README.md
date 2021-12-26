@@ -1,7 +1,7 @@
 # Preparation for the test
 
 ```shell
-git clone --recursive -b super_scalar https://github.com/dzwduan/Trigger.git  
+git clone --recursive -b super_scalar git@github.com:dzwduan/Trigger.git  
 
 ```
 
