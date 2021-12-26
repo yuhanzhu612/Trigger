@@ -1,3 +1,17 @@
+# Preparation for the test
+
+```shell
+git clone --recursive -b super_scalar https://github.com/yuhanzhu612/Trigger.git  
+
+```
+
+If the submodule repository clone fails, you will try
+
+```shell
+git submodule update --init --recursive
+
+```
+
 # Run
 
 ```shell
