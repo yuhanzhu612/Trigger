@@ -1,7 +1,8 @@
 # Preparation for the test
 
+### SSH transfer
 ```shell
-git clone --recursive -b super_scalar git@github.com:dzwduan/Trigger.git super_scalar
+git clone --recursive -b super_scalar git@github.com:yuhanzhu612/Trigger.git
 
 ```
 
@@ -22,7 +23,7 @@ make -j
 ```
 
 ```shell
-make
+cd ../..
 vim libraries/difftest/config/verilator.mk 
 
 -# WITH_DRAMSIM3 ?= 1
