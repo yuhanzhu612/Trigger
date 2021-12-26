@@ -1,7 +1,7 @@
 # Preparation for the test
 
 ```shell
-git clone --recursive -b super_scalar https://github.com/yuhanzhu612/Trigger.git  
+git clone --recursive -b super_scalar git@github.com:dzwduan/Trigger.git super_scalar
 
 ```
 
@@ -17,12 +17,8 @@ git submodule update --init --recursive
 ```shell
 cd libraries/NEMU
 make menuconfig
-
-1.Base ISA (riscv64)
-2.Testing and Debugging  ---> Enable differential testing (NEW)
-3.FPU Emulation (Use softfloat library)
-4.Detecting misaligned memory accessing (By software emulation)
-5.Processor difftest reference config  ---> Build shared library as processor difftest reference
+make riscv64-xs-ref_defconfig
+make -j
 ```
 
 ```shell
