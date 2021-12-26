@@ -253,14 +253,14 @@ export NOOP_HOME=$PROJECT_PATH
 export DRAMSIM3_HOME=$DRAMSIM3_HOME
 
 # Get id and name
-ID=`sed '/^ID=/!d;s/.*=//' $MYINFO_FILE`
-NAME=`sed '/^Name=/!d;s/.*=//' $MYINFO_FILE`
-if [[ ${#ID} -le 7 ]] || [[ ${#NAME} -le 1 ]]; then
-    echo "Please fill your information in myinfo.txt!!!"
-    exit 1
-fi
-ID="${ID##*\r}"
-NAME="${NAME##*\r}"
+# ID=`sed '/^ID=/!d;s/.*=//' $MYINFO_FILE`
+# NAME=`sed '/^Name=/!d;s/.*=//' $MYINFO_FILE`
+# if [[ ${#ID} -le 7 ]] || [[ ${#NAME} -le 1 ]]; then
+#     echo "Please fill your information in myinfo.txt!!!"
+#     exit 1
+# fi
+# ID="${ID##*\r}"
+# NAME="${NAME##*\r}"
 
 # Clean
 if [[ "$CLEAN" == "true" ]]; then
